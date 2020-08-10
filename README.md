@@ -1,4 +1,4 @@
-# SchmaPM -- A Package Manager for SQL Server
+# schema – a Package Manager for SQL Server
 
 ## Installation
 
