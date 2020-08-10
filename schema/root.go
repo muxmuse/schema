@@ -285,7 +285,7 @@ func execBatchesFromFile(path string) {
 	content, err := ioutil.ReadFile(path)
 	mfa.CatchFatal(err)
 
-	for _, batch := range strings.Split(string(content), "GO") {
+	for _, batch := range strings.Split(string(content), "GO\n") {
 		_, err = DB.Exec(batch)
 		mfa.CatchFatal(err)
 	}
