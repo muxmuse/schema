@@ -38,13 +38,13 @@ dependencies:
 
 connections:
 - name: database_name_1
-  url: db05:1433/database_name_1?sendStringParametersAsUnicode=true&prepareSQL=2&database=database_name_1
+  url: host:port/database_name_1?sendStringParametersAsUnicode=true&prepareSQL=2&database=database_name_1
   user: db_user_1
   password: db_password_1
   selected: false # the first selected connection is used by schema
 
 - name: database_name_2
-  url: db05:1433/database_name_2?sendStringParametersAsUnicode=true&prepareSQL=2&log=16&database=database_name_2
+  url: host:port/database_name_2?sendStringParametersAsUnicode=true&prepareSQL=2&log=16&database=database_name_2
   user: db_user_2
   password: db_password_2
   selected: true
