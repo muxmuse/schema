@@ -16,5 +16,6 @@ require (
 	golang.org/x/sys v0.0.0-20200808120158-1030fc2bf1d9 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	gopkg.in/ini.v1 v1.57.0 // indirect
+	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.3.0
 )

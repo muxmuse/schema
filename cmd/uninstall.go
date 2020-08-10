@@ -10,13 +10,13 @@ import (
 )
 
 func init() {
-  rootCmd.AddCommand(installCmd)
+  rootCmd.AddCommand(uninstallCmd)
 }
 
-var installCmd = &cobra.Command{
-  Use:   "install getter source",
-  Short: "Install a schema into a database",
-  Long:  `Install a schema into a database
+var uninstallCmd = &cobra.Command{
+  Use:   "uninstall getter source",
+  Short: "Remove a schema from database",
+  Long:  `Remove a schema from a database
           getter: one of {git, file}
           source: url or filepath
   `,
@@ -26,7 +26,7 @@ var installCmd = &cobra.Command{
     s.Getter = args[0]
     s.Url = args[1]
     
-    schema.Install(&s)
+    schema.Uninstall(&s)
 
 		defer schema.DB.Close();
   },

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"os"
 	"os/user"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -8,6 +9,10 @@ import (
   "errors"
   "github.com/muxmuse/schema/mfa"
 )
+
+var Config TConfig
+var SelectedConnectionConfig TConnectionConfig
+var WorkingDirectory string
 
 type TConnectionConfig struct {
 	Name string
@@ -48,4 +53,12 @@ func getSelectedConnectionConfig(config TConfig) TConnectionConfig {
 	}
 
 	return config.Connections[0]
+}
+
+func init() {
+	Config = getConfig()
+	SelectedConnectionConfig = getSelectedConnectionConfig(Config)
+	dir, err := os.Getwd()
+	mfa.CatchFatal(err)
+	WorkingDirectory = dir
 }
