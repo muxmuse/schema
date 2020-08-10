@@ -14,6 +14,17 @@ Each schema is a folder containing
 - `schema.yaml` (see below)
 - files ending on `uninstall.sql` to be executed on installation
 - other files ending on `install.sql` to be executed on uninstallation
+- subdirectories with the same structure (sub-schemas)
+
+Installation order:
+1. Dependencies
+2. Install scripts at root
+3. Sub-schemas
+
+Uninstallation order:
+1. Sub-schemas
+2. Uninstall scripts at root
+3. Dependencies are **not** currently uninstalled automatically.
 
 All sql files feature T-SQL statements, separated by `GO`.
 
