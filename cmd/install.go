@@ -14,7 +14,7 @@ func init() {
 }
 
 var installCmd = &cobra.Command{
-  Use:   "install getter source",
+  Use:   "install <getter> <source>",
   Short: "Install a schema into a database",
   Long:  `Install a schema into a database
           getter: one of {git, file}
