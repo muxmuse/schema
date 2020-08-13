@@ -291,6 +291,9 @@ func execBatchesFromFile(path string) {
 	}
 }
 
+func Connect() {
+	DB = getConnectedDatabase(SelectedConnectionConfig)
+}
 
 
 func init() {
@@ -305,8 +308,7 @@ func init() {
   client.InstallProtocol("https", githttp.NewClient(customClient))
   */
 
-	DB = getConnectedDatabase(SelectedConnectionConfig)
-	List()
+	
 
 	// var version string
 	// mfa.CatchFatal(DB.QueryRow("select [CALDERA].[SCHEMA___$$$]()").Scan(&version))

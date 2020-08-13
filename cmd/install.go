@@ -26,6 +26,7 @@ var installCmd = &cobra.Command{
     s.Getter = args[0]
     s.Url = args[1]
     
+    schema.Connect()
     schema.Install(&s)
 
 		defer schema.DB.Close();

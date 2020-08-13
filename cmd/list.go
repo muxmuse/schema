@@ -18,6 +18,7 @@ var listCmd = &cobra.Command{
   Short: "List installed schemas",
   Long:  ``,
   Run: func(cmd *cobra.Command, args []string) {
+    schema.Connect()
     schema.List()
     defer schema.DB.Close()
   },

@@ -26,6 +26,7 @@ var uninstallCmd = &cobra.Command{
     s.Getter = args[0]
     s.Url = args[1]
     
+    schema.Connect()
     schema.Uninstall(&s)
 
 		defer schema.DB.Close();
