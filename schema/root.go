@@ -13,6 +13,8 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/muxmuse/schema/mfa"
 
+	"github.com/gookit/color"
+
 	"os"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -251,7 +253,10 @@ func Uninstall(schema *TSchema) {
 	// Remove package
 	for _, script := range schema.UninstallScripts {
 		fmt.Print("[running] ", script, " ...")
-		execBatchesFromFile(filepath.Join(schema.Dir, script))
+		err := execBatchesFromFile(filepath.Join(schema.Dir, script))
+		if err != nil {
+			color.Yellow.Println("[ERROR] ", err)
+		}
 		fmt.Println("done")
 	}
 }
@@ -270,7 +275,7 @@ func Install(schema *TSchema) {
 	// Install package
 	for _, script := range schema.InstallScripts {
 		fmt.Print("[running] ", script, " ...")
-		execBatchesFromFile(filepath.Join(schema.Dir, script))
+		mfa.CatchFatal(execBatchesFromFile(filepath.Join(schema.Dir, script)))
 		fmt.Println("done")
 	}
 
@@ -281,14 +286,18 @@ func Install(schema *TSchema) {
 	}
 }
 
-func execBatchesFromFile(path string) {
+func execBatchesFromFile(path string) (error) {
 	content, err := ioutil.ReadFile(path)
 	mfa.CatchFatal(err)
 
 	for _, batch := range strings.Split(string(content), "GO\n") {
 		_, err = DB.Exec(batch)
-		mfa.CatchFatal(err)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func Connect() {
