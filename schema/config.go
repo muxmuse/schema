@@ -26,7 +26,7 @@ type TConfig struct {
 	Connections []TConnectionConfig
 }
 
-func getConfig() TConfig {
+func GetConfig() TConfig {
 	currentUser, err := user.Current()
 	mfa.CatchFatal(err)
 	
@@ -39,6 +39,17 @@ func getConfig() TConfig {
 	mfa.CatchFatal(err)
 
 	return config
+}
+
+func SaveConfig(config TConfig) {
+	currentUser, err := user.Current()
+	mfa.CatchFatal(err)
+	
+	content, err := yaml.Marshal(config)
+	mfa.CatchFatal(err)
+	mfa.CatchFatal(ioutil.WriteFile(
+		filepath.Join(currentUser.HomeDir, ".schemapm", "config.yaml"),
+		content, 0644))
 }
 
 func getSelectedConnectionConfig(config TConfig) TConnectionConfig {
@@ -56,7 +67,7 @@ func getSelectedConnectionConfig(config TConfig) TConnectionConfig {
 }
 
 func init() {
-	Config = getConfig()
+	Config = GetConfig()
 	SelectedConnectionConfig = getSelectedConnectionConfig(Config)
 	dir, err := os.Getwd()
 	mfa.CatchFatal(err)
