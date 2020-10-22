@@ -1,5 +1,8 @@
 # schema – a Package Manager for SQL Server
 
+** WIP Wait a few days before you clone or fork -- I'll provide a working version soon**
+
+
 ## Installation
 
 1. Install go
@@ -99,3 +102,8 @@ schema migrate my-package --to 0.0.2
 # 
 # done, my-packge is now on 0.0.2
 ```
+
+
+## Notes
+
+Consider [mssql-scripter](https://github.com/microsoft/mssql-scripter/blob/dev/doc/installation_guide.md#linux-installation) for downloading schemas initially
