@@ -55,8 +55,13 @@ func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 	mfa.CatchFatal(db.Ping())
 	mfa.CatchFatal(err)
 
-	_, err = db.Exec("use " + con.Name)
-	mfa.CatchFatal(err)
+	var dbname string
+	mfa.CatchFatal(db.QueryRow("select DB_NAME()").Scan(&dbname))
+	if SelectedConnectionConfig.Name != dbname {
+		log.Print("Actual database is " + dbname + " trying use...")
+		_, err = db.Exec("use " + con.Name)
+		mfa.CatchFatal(err)
+	}
 	
 	return db
 }
@@ -243,6 +248,30 @@ func Scan(schema *TSchema) {
 func Uninstall(schema *TSchema) {
 	Get(schema)
 	Scan(schema)
+	/*
+
+	rows, err := DB.Query("select [name], [type] from sys.objects where schema_id = SCHEMA_ID('" + "') and [type] in ('P', 'FN')")
+	mfa.CatchFatal(err)
+	defer rows.Close()
+
+	var (
+		name string
+		objectType string)
+
+	for rows.Next() {
+		err := rows.Scan(&name, &objectType)
+		switch objectType {
+		case "P":
+			mfa.CatchFatal(DB.Exec("DROP PROCEDURE " + name))
+		case "FN":
+			mfa.CatchFatal(DB.Exec("DROP FUNCTION " + name))
+		}
+	}
+
+	// SELECT * FROM sys.objects WHERE schema_id = SCHEMA_ID('...') where type in ('FN', 'P')
+	// column name:  , ...
+	// column type: { FN (SQL_SCALAR_FUNCTION), U (USER_TABLE), PK (PRIMARY_KEY_CONSTRAINT), P (SQL_STORED_PROCEDURE) }
+	*/
 
 	// Remove subpackages
 	for i := 0; i < len(schema.Packages); i++ {
@@ -273,6 +302,7 @@ func Install(schema *TSchema) {
 	}
 	
 	// Install package
+	fmt.Println("\nInstalling package", schema.Name)
 	for _, script := range schema.InstallScripts {
 		fmt.Print("[running] ", script, " ...")
 		mfa.CatchFatal(execBatchesFromFile(filepath.Join(schema.Dir, script)))
@@ -280,6 +310,7 @@ func Install(schema *TSchema) {
 	}
 
 	// Install subpackages
+	fmt.Println("\nInstalling subpackages of", schema.Name)
 	for i := 0; i < len(schema.Packages); i++ {
 		Install(&schema.Packages[i])
 		fmt.Println(schema.Packages[i].Name, schema.Packages[i].Dir)
@@ -299,6 +330,29 @@ func execBatchesFromFile(path string) (error) {
 
 	return nil
 }
+/*
+func Pull() {
+	for _, schema := range schemas {
+		err = DB.QueryRow("select [" + schema.Name + "].[SCHEMA_INFO]()").Scan(&schema.Version)
+		if err != nil {
+		} else {
+			result = append(result, schema)
+			fmt.Println("-", schema.Name, "@", schema.Version)
+		}
+	}
+
+	exec sp_helptext 'dbo.proc_akquisestamm_detail'
+
+	SELECT * FROM sys.all_objects
+WHERE ([type] = 'P' OR [type] = 'X' OR [type] = 'PC')
+ORDER BY [name];
+go
+
+
+for each object function
+	EXEC sp_helptext N'..'
+}
+*/
 
 func Connect() {
 	DB = getConnectedDatabase(SelectedConnectionConfig)
@@ -320,6 +374,65 @@ func init() {
 	
 
 	// var version string
-	// mfa.CatchFatal(DB.QueryRow("select [CALDERA].[SCHEMA___$$$]()").Scan(&version))
+	// mfa.CatchFatal(DB.QueryRow("select ").Scan(&version))
 	// log.Print("version", version)
 }
+
+
+/*
+
+pull schema from database
+
+# assuming state
+C 	CHECK_CONSTRAINT
+F 	FOREIGN_KEY_CONSTRAINT
+U 	USER_TABLE
+IT	INTERNAL_TABLE
+S 	SYSTEM_TABLE
+D 	DEFAULT_CONSTRAINT
+PK	PRIMARY_KEY_CONSTRAINT
+TF	SQL_TABLE_VALUED_FUNCTION
+TR	SQL_TRIGGER
+UQ	UNIQUE_CONSTRAINT
+
+# assuming state-less
+#   .net running on sql server o_O
+FS	CLR_SCALAR_FUNCTION
+PC	CLR_STORED_PROCEDURE
+
+#   dlls referenced from sql server O_o
+X 	EXTENDED_STORED_PROCEDURE
+
+#   things that I used before
+P 	SQL_STORED_PROCEDURE
+FN	SQL_SCALAR_FUNCTION
+
+#   everything else
+SN	SYNONYM
+IF	SQL_INLINE_TABLE_VALUED_FUNCTION
+SQ	SERVICE_QUEUE
+AF	AGGREGATE_FUNCTION
+V 	VIEW
+
+# no idea
+TT	TYPE_TABLE
+
+
+USE [your_database_name_here];
+GO
+SELECT * FROM sys.all_objects
+WHERE ([type] = 'P' OR [type] = 'X' OR [type] = 'PC')
+ORDER BY [name];
+go
+
+
+for each object function
+	EXEC sp_helptext N'...'
+
+	or see here: https://docs.microsoft.com/en-us/sql/relational-databases/stored-procedures/view-the-definition-of-a-stored-procedure?view=sql-server-ver15
+
+
+for formatting of the pulled objects, see here
+	https://github.com/mjibson/sqlfmt
+
+*/
