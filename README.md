@@ -1,7 +1,6 @@
 # schema – a Package Manager for SQL Server
 
-** WIP Wait a few days before you clone or fork -- I'll provide a working version soon**
-
+** WORK IN PROGRESS, EVERYTHING MIGHT CHANGE, NOTHING MIGHT WORK, MIGHT DESTROY YOUR DATA, ABSOLUTELY NO WARRANTIES **
 
 ## Installation
 
