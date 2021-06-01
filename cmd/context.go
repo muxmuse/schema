@@ -16,8 +16,8 @@ func init() {
 
 var contextCmd = &cobra.Command{
   Use:   "context [context_name]",
-  Short: "Select a connection",
-  Long:  `Select a configured in ~/.schemapm/config to be used for all commands.
+  Short: "Select a database connection",
+  Long:  `Select a database connection configured in ~/.schemapm/config to be used for all commands.
           This sets the property "selected" to true.`,
   Run: func(cmd *cobra.Command, args []string) {
     config := schema.GetConfig()
