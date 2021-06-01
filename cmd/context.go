@@ -1,7 +1,7 @@
 package cmd
 
 import (
-  _ "log"
+  "log"
   "fmt"
 
   "github.com/spf13/cobra"
@@ -15,15 +15,24 @@ func init() {
 }
 
 var contextCmd = &cobra.Command{
-  Use:   "context use <",
+  Use:   "context [context_name]",
   Short: "Select a connection",
   Long:  `Select a configured in ~/.schemapm/config to be used for all commands.
           This sets the property "selected" to true.`,
   Run: func(cmd *cobra.Command, args []string) {
     config := schema.GetConfig()
+    validContextName := len(args) == 0
 
     for i := range config.Connections {
-      if(len(args) > 0) {
+      validContextName = validContextName || config.Connections[i].Name == args[0]
+    }
+    
+    if(!validContextName) {
+      log.Println("No such context ", args[0])
+    }
+
+    for i := range config.Connections {
+      if(len(args) > 0 && validContextName) {
         use := config.Connections[i].Name == args[0]
         config.Connections[i].Selected = use
       }
@@ -36,7 +45,7 @@ var contextCmd = &cobra.Command{
       
       fmt.Println(config.Connections[i].Name)
     }
-
+    
     schema.SaveConfig(config)
   },
 }
