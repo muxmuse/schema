@@ -18,6 +18,9 @@ var listCmd = &cobra.Command{
   Short: "List installed schemas",
   Long:  ``,
   Run: func(cmd *cobra.Command, args []string) {
+    if(schema.SelectedConnectionConfig.Log < 2) {
+      schema.SelectedConnectionConfig.Log = 2
+    }
     schema.Connect()
     schema.List()
     defer schema.DB.Close()

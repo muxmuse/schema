@@ -48,7 +48,7 @@ var DB *sql.DB
 func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 	db, err := sql.Open(
 		"sqlserver",
-		mfa.Format("url", "sqlserver://{{.User}}:{{.Password}}@{{.Url}}", con))
+		mfa.Format("url", "sqlserver://{{.User}}:{{.Password}}@{{.Url}}?sendStringParametersAsUnicode={{.SendStringParametersAsUnicode}}&prepareSQL={{.PrepareSQL}}&log={{.Log}}&database={{.Database}}", con))
 
 	mfa.CatchFatal(err)
 

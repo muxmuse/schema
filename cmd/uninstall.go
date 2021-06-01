@@ -26,6 +26,9 @@ var uninstallCmd = &cobra.Command{
     s.Getter = args[0]
     s.Url = args[1]
     
+    if(schema.SelectedConnectionConfig.Log < 8) {
+      schema.SelectedConnectionConfig.Log = 8
+    }
     schema.Connect()
     schema.Uninstall(&s)
 

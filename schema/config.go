@@ -20,6 +20,11 @@ type TConnectionConfig struct {
 	User string
 	Password string
 	Selected bool
+	Log int
+	PrepareSQL int
+	SendStringParametersAsUnicode	bool
+	Database string
+}
 }
 
 type TConfig struct {
