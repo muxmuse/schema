@@ -140,7 +140,7 @@ All sql files consist of T-SQL statements, separated by `GO`.
     # Collecting changes
     # - updating [my_schema].[p_my_proc_2] ...
     # - updating [my_schema].[p_my_proc_9] ...
-    # Rest unchanged.
+    # my_schema unchanged.
     # Setting version to 0.0.13-wip
     ```
 
