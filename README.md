@@ -117,7 +117,7 @@ Each schema is a folder containing
 - files ending on `install.sql` to be executed on installation. At least one such file must exist and install the version function
 - matching files ending on `uninstall.sql` to be executed on uninstallation
 - subdirectories with the same structure (modules)
-- migration files name ending on something like `v0.0.1_v0.0.2.migrate.sql`
+- migration files `v0.0.1_v0.0.2.migrate.sql`
 - other files, which are ignored by schema.
 
 All sql files consist of T-SQL statements, separated by `GO`.
