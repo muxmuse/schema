@@ -111,22 +111,6 @@ schema uninstall HELLO_WORLD
 # Successfully removed HELLO_WORLD v0.0.2
 ```
 
-Create a new schema
-``` bash
-schema create MY_SCHEMA
-# schema.yaml
-# initial_0.0.1.migration.sql
-# 0.0.1_initial.migration.sql
-# install.sql
-# uninstall.sql
-```
-
-Create a schema by retreiving existing objects from database
-``` bash
-schema create --from-db-schema dbo
-# ...
-```
-
 ## Create a package
 Each schema is a folder containing 
 - `schema.yaml` (see example package hello-world)
