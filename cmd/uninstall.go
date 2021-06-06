@@ -5,7 +5,7 @@ import (
 
   "github.com/spf13/cobra"
 
-  _ "github.com/muxmuse/schema/mfa"
+  // "github.com/muxmuse/schema/mfa"
   "github.com/muxmuse/schema/schema"
 )
 
@@ -14,24 +14,20 @@ func init() {
 }
 
 var uninstallCmd = &cobra.Command{
-  Use:   "uninstall getter source",
-  Short: "Remove a schema from database",
-  Long:  `Remove a schema from a database
-          getter: one of {git, file}
-          source: url or filepath
+  Use:   "uninstall <name>",
+  Short: "Remove schema from database",
+  Long:  `Remove schema from database
+          name: Name of the schema that shall be removed
   `,
-  Args: cobra.ExactArgs(2),
+  Args: cobra.ExactArgs(1),
   Run: func(cmd *cobra.Command, args []string) {
-    var s schema.TSchema
-    s.Getter = args[0]
-    s.Url = args[1]
-    
-    if(schema.SelectedConnectionConfig.Log < 8) {
-      schema.SelectedConnectionConfig.Log = 8
+
+    if(schema.SelectedConnectionConfig.Log < 2) {
+      schema.SelectedConnectionConfig.Log = 2
     }
     schema.Connect()
-    schema.Uninstall(&s)
-
+    schema.Uninstall(args[0])
+    
 		defer schema.DB.Close();
   },
 }

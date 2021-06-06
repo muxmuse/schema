@@ -13,6 +13,7 @@ import (
 var Config TConfig
 var SelectedConnectionConfig TConnectionConfig
 var WorkingDirectory string
+var SchemasDir string
 
 type TConnectionConfig struct {
 	Name string
@@ -24,7 +25,6 @@ type TConnectionConfig struct {
 	PrepareSQL int
 	SendStringParametersAsUnicode	bool
 	Database string
-}
 }
 
 type TConfig struct {
@@ -71,7 +71,14 @@ func getSelectedConnectionConfig(config TConfig) TConnectionConfig {
 	return config.Connections[0]
 }
 
+
 func init() {
+	currentUser, err := user.Current()
+	mfa.CatchFatal(err)
+	
+	SchemasDir = filepath.Join(currentUser.HomeDir, ".schemapm", "schemas")
+	mfa.CatchFatal(os.MkdirAll(SchemasDir, os.ModePerm))
+
 	Config = GetConfig()
 	SelectedConnectionConfig = getSelectedConnectionConfig(Config)
 	dir, err := os.Getwd()

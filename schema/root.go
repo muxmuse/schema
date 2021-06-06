@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"fmt"
+	// "fmt"
 	"log"
 
 	// "crypto/tls"
@@ -13,35 +13,14 @@ import (
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/muxmuse/schema/mfa"
 
-	"github.com/gookit/color"
+	// "github.com/gookit/color"
 
-	"os"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
-  "path/filepath"
-
-  "gopkg.in/src-d/go-git.v4"
 
   "strings"
-  "errors"
+  
+  // "errors"
 )
-
-type TSchema struct {
-	Name string
-	Description string
-	Version string
-
-	InstallScripts []string
-	UninstallScripts []string
-	Packages []TSchema
-
-	Url string
-	Getter string
-	Dependencies []TSchema
-
-	Owner string
-	Dir string
-}
 
 var DB *sql.DB
 
@@ -66,76 +45,13 @@ func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 	return db
 }
 
-func listSchemas(db *sql.DB) []TSchema {
-	 stmt, err := db.Prepare(`
-		select 
-		    [schema_name] = [schema].[name], 
-		    [owner_name] = [user].[name]
-		from 
-		    sys.schemas [schema]
-		    join
-		    sys.sysusers [user]
-		    on [schema].[principal_id] = [user].[uid]
-		    where [user].[name] not in (
-		        'db_accessadmin',
-		        'db_backupoperator',
-		        'db_datareader',
-		        'db_datawriter',
-		        'db_ddladmin',
-		        'db_denydatareader',
-		        'db_denydatawriter',
-		        'db_owner',
-		        'db_securityadmin',
-		        'INFORMATION_SCHEMA')`)
-
-	mfa.CatchFatal(err)
-	defer stmt.Close()
-
-	rows, err := stmt.Query()
-	mfa.CatchFatal(err)
-	defer rows.Close()
-
-	var schemas []TSchema
-	for rows.Next() {
-			var schema TSchema
-			rows.Scan(&schema.Name, &schema.Owner)
-			schemas = append(schemas, schema)
-	}
-	mfa.CatchFatal(rows.Err())
-
-	return schemas
-}
-
-
-func List() {
-	schemas := listSchemas(DB)
-	
-	var dbname string
-	mfa.CatchFatal(DB.QueryRow("select DB_NAME()").Scan(&dbname))
-	if SelectedConnectionConfig.Name != dbname {
-		log.Fatal("Actual database is " + dbname)
-	}
-
-	fmt.Println("Installed packages on " + SelectedConnectionConfig.Name)
-
-	var err error
-	var result []TSchema
-	for _, schema := range schemas {
-		err = DB.QueryRow("select [" + schema.Name + "].[SCHEMA_INFO]()").Scan(&schema.Version)
-		if err != nil {
-		} else {
-			result = append(result, schema)
-			fmt.Println("-", schema.Name, "@", schema.Version)
-		}
-	}
-}
-
+/*
 func schemaLocallyAvailable(schema *TSchema) bool {
 	var schemaRoot string
 	
 	switch {
-	case len(schema.Dir) > 0:
-		schemaRoot = schema.Dir
+	case len(schema.localDir) > 0:
+		schemaRoot = schema.localDir
 	case schema.Getter == "" || schema.Getter == "file":
 		switch {
 		case len(schema.Url) > 0:
@@ -159,8 +75,10 @@ func schemaLocallyAvailable(schema *TSchema) bool {
 
 	return false
 }
+*/
 
 // Find schema locally or download it
+/*
 func Get(schema *TSchema) {
 	if schemaLocallyAvailable(schema) {
 		return
@@ -187,67 +105,35 @@ func Get(schema *TSchema) {
 		mfa.CatchFatal(err)
 		
 		// Move file to schemas/{name}
-		schema.Dir = filepath.Join(WorkingDirectory, "schemas", schema.Name)
+		schema.localDir = filepath.Join(WorkingDirectory, "schemas", schema.Name)
 		if schemaLocallyAvailable(schema) {
 			defer os.RemoveAll(tmpDir)
 		} else {
-			mfa.CatchFatal(os.Rename(tmpDir, schema.Dir))
+			mfa.CatchFatal(os.Rename(tmpDir, schema.localDir))
 		}
 
 	case "sqlserver":
-		// TODO [mfa] read schema contents from dabatase
+		// TODO [mfa] read schema contents from database
 
 	default:
 		// Treat as local directory
-		schema.Dir = schema.Url
-		yamlFile, err := ioutil.ReadFile(filepath.Join(schema.Dir, "schema.yaml"))
+		schema.localDir = schema.Url
+		yamlFile, err := ioutil.ReadFile(filepath.Join(schema.localDir, "schema.yaml"))
 		mfa.CatchFatal(err)
 
 		err = yaml.Unmarshal(yamlFile, &schema)
 		mfa.CatchFatal(err)
 	}
 
-	fmt.Println("[pulled] " + schema.Name + " at " + schema.Dir)
+	fmt.Println("[pulled] " + schema.Name + " at " + schema.localDir)
 }
+*/
 
-func Scan(schema *TSchema) {
-	// Scan package contents
-	yamlFile, err := ioutil.ReadFile(filepath.Join(schema.Dir, "schema.yaml"))
-	mfa.CatchFatal(err)
 
-	err = yaml.Unmarshal(yamlFile, &schema)
-	mfa.CatchFatal(err)
 
-	fileInfos, err := ioutil.ReadDir(schema.Dir)
-	mfa.CatchFatal(err)
-
-	for _, fileInfo := range fileInfos {
-		switch {
-		
-		case strings.HasSuffix(fileInfo.Name(), "uninstall.sql"):
-			schema.UninstallScripts = append(schema.UninstallScripts, fileInfo.Name())
-		
-		case strings.HasSuffix(fileInfo.Name(), "install.sql"):
-			schema.InstallScripts = append(schema.InstallScripts, fileInfo.Name())
-		
-		case fileInfo.IsDir():
-			if _, err := os.Stat(filepath.Join(schema.Dir, fileInfo.Name(), "schema.yaml")); err == nil {
-			  var subPackage TSchema
-				subPackage.Dir = filepath.Join(schema.Dir, fileInfo.Name())
-				schema.Packages = append(schema.Packages, subPackage)
-
-				fmt.Println("[found sub-package]", subPackage.Dir)
-				Scan(&subPackage)
-			} else {
-				fmt.Println("ignoring ", fileInfo.Name())
-			}
-		}
-	}
-}
-
-func Uninstall(schema *TSchema) {
-	Get(schema)
-	Scan(schema)
+//func Uninstall(schema *TSchema) {
+	// Get(schema)
+	// Scan(schema)
 	/*
 
 	rows, err := DB.Query("select [name], [type] from sys.objects where schema_id = SCHEMA_ID('" + "') and [type] in ('P', 'FN')")
@@ -274,53 +160,33 @@ func Uninstall(schema *TSchema) {
 	*/
 
 	// Remove subpackages
-	for i := 0; i < len(schema.Packages); i++ {
-		Uninstall(&schema.Packages[i])
-		fmt.Println(schema.Packages[i].Name, schema.Packages[i].Dir)
-	}
+	// for i := 0; i < len(schema.Packages); i++ {
+	// 	Uninstall(&schema.Packages[i])
+	// 	fmt.Println(schema.Packages[i].Name, schema.Packages[i].localDir)
+	// }
 
+  /*
 	// Remove package
 	for _, script := range schema.UninstallScripts {
 		fmt.Print("[running] ", script, " ...")
-		err := execBatchesFromFile(filepath.Join(schema.Dir, script))
+		err := execBatchesFromFile(filepath.Join(schema.localDir, script))
 		if err != nil {
 			color.Yellow.Println("[ERROR] ", err)
 		}
 		fmt.Println("done")
 	}
-}
+	*/
 
-func Install(schema *TSchema) {
-	Get(schema)
-	Scan(schema)
+	// Remove schema-info from database
+	// DB.Exec(fmt.Sprintf("DROP FUNCTION [%s].[SCHEMA_INFO]()", schema.Name))
+	// DB.Exec(fmt.Sprintf("DROP SCHEMA [%s]", schema.Name))
+//}
 
-	// Install dependencies
-	fmt.Println("\nInstalling dependencies for", schema.Name)
-	for i := 0; i < len(schema.Dependencies); i++ {
-		// Install(&schema.Dependencies[i])
-		fmt.Println(schema.Dependencies[i].Name, schema.Dependencies[i].Dir)
-	}
-	
-	// Install package
-	fmt.Println("\nInstalling package", schema.Name)
-	for _, script := range schema.InstallScripts {
-		fmt.Print("[running] ", script, " ...")
-		mfa.CatchFatal(execBatchesFromFile(filepath.Join(schema.Dir, script)))
-		fmt.Println("done")
-	}
-
-	// Install subpackages
-	fmt.Println("\nInstalling subpackages of", schema.Name)
-	for i := 0; i < len(schema.Packages); i++ {
-		Install(&schema.Packages[i])
-		fmt.Println(schema.Packages[i].Name, schema.Packages[i].Dir)
-	}
-}
 
 func execBatchesFromFile(path string) (error) {
 	content, err := ioutil.ReadFile(path)
 	mfa.CatchFatal(err)
-
+	
 	for _, batch := range strings.Split(string(content), "GO\n") {
 		_, err = DB.Exec(batch)
 		if err != nil {
@@ -359,7 +225,7 @@ func Connect() {
 }
 
 
-func init() {
+// func init() {
 	// Disable TLS certificate checks for 
 	/*
 	customClient := &http.Client {
@@ -376,7 +242,7 @@ func init() {
 	// var version string
 	// mfa.CatchFatal(DB.QueryRow("select ").Scan(&version))
 	// log.Print("version", version)
-}
+// }
 
 
 /*

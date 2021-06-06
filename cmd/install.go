@@ -5,8 +5,9 @@ import (
 
   "github.com/spf13/cobra"
 
-  _ "github.com/muxmuse/schema/mfa"
+  "github.com/muxmuse/schema/mfa"
   "github.com/muxmuse/schema/schema"
+  "gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 func init() {
@@ -14,24 +15,30 @@ func init() {
 }
 
 var installCmd = &cobra.Command{
-  Use:   "install <getter> <source>",
+  Use:   "install <repo> [<git tag>]",
   Short: "Install a schema into a database",
   Long:  `Install a schema into a database
-          getter: one of {git, file}
-          source: url or filepath
+          repo: url (or filepath) of git repsitory
+          git tag: tag to checkout or current directory state if omited
   `,
-  Args: cobra.ExactArgs(2),
+  Args: cobra.RangeArgs(1, 2),
   Run: func(cmd *cobra.Command, args []string) {
-    var s schema.TSchema
-    s.Getter = args[0]
-    s.Url = args[1]
-    
-    if(schema.SelectedConnectionConfig.Log < 8) {
-      schema.SelectedConnectionConfig.Log = 8
+
+    if(schema.SelectedConnectionConfig.Log < 2) {
+      schema.SelectedConnectionConfig.Log = 2
     }
     schema.Connect()
-    schema.Install(&s)
 
+    if len(args) == 1 {
+      err, s := schema.CheckoutDev(args[0])
+      mfa.CatchFatal(err)
+      schema.Install(s)
+    } else {
+      err, s := schema.Checkout(args[0], plumbing.NewTagReferenceName(args[1]))
+      mfa.CatchFatal(err)
+      schema.Install(s)
+    }
+    
 		defer schema.DB.Close();
   },
 }

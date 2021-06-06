@@ -16,102 +16,141 @@
 
     connections:
     - name: database_name_1
-      url: host:port/database_name_1?sendStringParametersAsUnicode=true&prepareSQL=2&log=8&database=database_name_1
+      url: host:port/database_name_1
+      sendStringParametersAsUnicode: true
+      prepareSQL: 2
+      log: 8
+      database: database_name_1
       user: db_user_1
       password: db_password_1
       selected: false # the first selected connection is used by schema
     - name: database_name_2
-      url: host:port/database_name_2?sendStringParametersAsUnicode=true&prepareSQL=2&log=16&database=database_name_2
+      url: host:port/database_name_2
+      sendStringParametersAsUnicode: true
+      prepareSQL: 2
+      log: 16
+      database: database_name_2
       user: db_user_2
       password: db_password_2
       selected: true
     ```
 
-## Use schema with an existing package
+## Usage
 
-In the folder containing `schema.yaml`
-
+List all available contexts (connections) and show which one is selected
 ``` bash
-schema use database_name_1
-# database_name_1 true
-# database_name_2 false
-schema list
-# - MY_SCHEMA_1 @ 0.0.2
-# - MY_SCHEMA_2 @ 0.3.2-beta
+schema context
+#   conn_1
+# > conn_2
+#   conn_3
 ```
-If your schema contains migrations scripts named like `.state.initial_0.0.1.sql`, then you can run them manually to apply changes to the data in the schema.
 
-Afterwards:
+Select a context
 ``` bash
-# run all install scripts
-schema install file .
+schema context conn_3
+#   conn_1
+#   conn_2
+# > conn_3
+```
 
-# run all uninstall scripts
-schema uninstall file .
+List installed schemas on the database
+``` bash
+schema list
+# - v0.0.2       MY_SCHEMA_1
+# - v0.3.2-beta  MY_SCHEMA_2
+```
+
+Install a schema
+``` bash
+schema install git@github.com:muxmuse/hello_world.schema.git v0.0.2
+# Checking out https://github.com/muxmuse/hello_world.schema.git refs/tags/v0.0.2
+# [schema] HELLO_WORLD v0.0.2
+# [module] hello-module
+# About to run migrations v0.0.0 -> v0.0.2
+# - v0.0.0_v0.0.1.migrate.sql
+# - v0.0.1_v0.0.2.migrate.sql
+# Confirm (y/n): y
+# [running]  v0.0.0_v0.0.1.migrate.sql
+# [success]  v0.0.0_v0.0.1.migrate.sql
+# [running]  v0.0.1_v0.0.2.migrate.sql
+# [success]  v0.0.1_v0.0.2.migrate.sql
+# [running] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.2/install.sql
+# [success] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.2/install.sql
+# 
+# Successfully installed HELLO_WORLD v0.0.2
+# 
+
+schema list
+# Installed schemas on ...
+# - v0.0.2         HELLO_WORLD
+# 
+# Unmanaged schemas: dbo, ..., sys
+
+schema show HELLO_WORLD
+
+# name: HELLO_WORLD
+# description: Demo package for schemapm
+# gitTag: v0.0.2
+# gitRepoUrl: git@github.com:muxmuse/hello_world.schema.git
+
+schema uninstall HELLO_WORLD
+# Checking out git@github.com:muxmuse/hello_world.schema.git refs/tags/v0.0.2
+# [schema] HELLO_WORLD v0.0.2
+# [module] hello-module
+# [running] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.2/uninstall.sql
+# [success] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.2/uninstall.sql
+# About to run migrations v0.0.2 -> v0.0.0
+# - v0.0.2_v0.0.1.migrate.sql
+# - v0.0.1_v0.0.0.migrate.sql
+# Confirm (y/n): y
+# [running]  v0.0.2_v0.0.1.migrate.sql
+# [success]  v0.0.2_v0.0.1.migrate.sql
+# [running]  v0.0.1_v0.0.0.migrate.sql
+# [success]  v0.0.1_v0.0.0.migrate.sql
+# 
+# Successfully removed HELLO_WORLD v0.0.2
+```
+
+Create a new schema
+``` bash
+schema create MY_SCHEMA
+# schema.yaml
+# initial_0.0.1.migration.sql
+# 0.0.1_initial.migration.sql
+# install.sql
+# uninstall.sql
+```
+
+Create a schema by retreiving existing objects from database
+``` bash
+schema create --from-db-schema dbo
+# ...
 ```
 
 ## Create a package
 Each schema is a folder containing 
-- `schema.yaml`
-    ``` yaml
-    # schema.yaml
-
-    name: MY_SCHEMA
-    description: A test schema
-    dependencies:
-    - url: ssh://git@gitea.mycompany.com/my_gitea_user/my_repo.git
-      getter: git
-      name: my_repo
-    - url: https://github.com/my_user/my_repo
-      getter: git
-      name: my_repo
-    - url: schemas/local_dependency
-    ```
+- `schema.yaml` (see example package hello-world)
 - files ending on `install.sql` to be executed on installation. At least one such file must exist and install the version function
-    ``` mssql
-    CREATE FUNCTION [MY_SCHEMA].[SCHEMA_INFO]()
-    RETURNS varchar(100)
-    AS
-    BEGIN
-        RETURN '0.1.17'
-    END
-    GO
-    ```
-- other files ending on `uninstall.sql` to be executed on uninstallation
-- subdirectories with the same structure (sub-schemas)
-- migration files name ending on something like `state.v1_v2.sql` to be executed manually by the user to migrate between version. At least on of those files must exist, ending on `.state.initial_(...)` that creates the schema.
+- matching files ending on `uninstall.sql` to be executed on uninstallation
+- subdirectories with the same structure (modules)
+- migration files name ending on something like `v0.0.1_v0.0.2.migrate.sql`
 - other files, which are ignored by schema.
 
-All sql files feature T-SQL statements, separated by `GO`.
+All sql files consist of T-SQL statements, separated by `GO`.
 
 ## Whishes
-
-1. Run migration scripts using schema
+1. Dependency management
+2. Create a schema from scratch `schema new` or so
+3. Create a schema from existing objects
     ``` bash
-    schema migrate my-package --to 0.0.4
-    # Migrating package my-package on connection mydb
-    # Installed version is 0.0.1
-    #  
-    # running migration scripts
-    # - 0.0.2.upgrade-to.sql
-    # - 0.0.3.upgrade-to.sql
-    # - 0.0.4.upgrade-to.sql
-    # 
-    # done, my-packge is now on 0.0.4
-
-    schema migrate my-package --to 0.0.2
-    # Migrating package my-package on connection mydb
-    # Installed version is 0.0.1
-    #  
-    # running migration scripts
-    # - 0.0.3.downgrade-to.sql
-    # - 0.0.2.downgrade-to.sql
-    # 
-    # done, my-packge is now on 0.0.2
-    ```
-2. Create database schema and version information automatically, without specifying in SQL script
-
-3. Compare all objects in an installed schema with the repository
+      schema new --from-installed 'dbo'
+      # Collecting information:
+      # - dbo.p_my_old_business_logic
+      # - ...
+      # Creating schema.yaml
+      # done, created new local package dbo at version 0.0.1
+      ```
+4. Compare all objects in an installed schema with the repository
     ``` bash
     schema install file .
     # Collecting changes
@@ -121,17 +160,10 @@ All sql files feature T-SQL statements, separated by `GO`.
     # Setting version to 0.0.13-wip
     ```
 
-4. Create a new schema by pulling existing objects from a database
-    ``` bash
-    schema create --from-installed 'dbo'
-    # Collecting information:
-    # - dbo.p_my_old_business_logic
-    # - ...
-    # Creating schema.yaml
-    # done, created new local package dbo at version 0.0.1
-    ```
 
 5. Install functions before installing procedures
+
+6. Dependency management
 
 ## Notes
 
