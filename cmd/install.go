@@ -40,5 +40,6 @@ var installCmd = &cobra.Command{
     }
     
 		defer schema.DB.Close();
+    schema.CleanUp()
   },
 }

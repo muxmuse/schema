@@ -85,3 +85,8 @@ func init() {
 	mfa.CatchFatal(err)
 	WorkingDirectory = dir
 }
+
+
+func CleanUp() {
+	os.RemoveAll(SchemasDir)
+}

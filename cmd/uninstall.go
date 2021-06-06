@@ -29,5 +29,6 @@ var uninstallCmd = &cobra.Command{
     schema.Uninstall(args[0])
     
 		defer schema.DB.Close();
+    schema.CleanUp()
   },
 }
