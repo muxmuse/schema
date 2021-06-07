@@ -111,6 +111,17 @@ schema uninstall HELLO_WORLD
 # Successfully removed HELLO_WORLD v0.0.2
 ```
 
+## Package development
+
+To re-install the package you are currently working on, use
+
+``` bash
+schema install ./local/path
+```
+
+This will run all uninstall scripts and all install scripts from your local directory. Errors in uninstall scripts are ignored.
+
+
 ## Create a package
 Each schema is a folder containing 
 - `schema.yaml` (see example package hello-world)
