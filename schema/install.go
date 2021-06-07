@@ -150,6 +150,19 @@ func migrate(fromVersion string, toVersion string, schema *TSchema) {
 	}
 }
 
+func runScriptsIngoreErrors(scripts [][2]string) {
+	for index := range scripts {
+		fmt.Println("[running]", scripts[index][0])
+		scriptErr := execBatchesFromFile(scripts[index][0])
+		if scriptErr == nil {
+			fmt.Println("[success]", scripts[index][0])
+		} else {
+			fmt.Println("[warning]", scripts[index][0], "executed with errors")
+			fmt.Println("[warning]", scriptErr)
+		}
+	}
+}
+
 func runScriptsOrRollBack(scripts [][2]string) error {	
 	var err error
 	var index int
@@ -198,7 +211,7 @@ func Install(schemaToInstall *TSchema) {
 			mfa.CatchFatal(err)
 			mfa.CatchFatal( runScriptsOrRollBack(installedSchema.UninstallScripts()) )
 		} else {
-			mfa.CatchFatal( runScriptsOrRollBack(schemaToInstall.UninstallScripts()) )	
+			runScriptsIngoreErrors(schemaToInstall.UninstallScripts())
 		}
 	}
 

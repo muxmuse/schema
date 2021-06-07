@@ -1,6 +1,6 @@
 # schema – a Package Manager for SQL Server
 
-** WORK IN PROGRESS, EVERYTHING MIGHT CHANGE, NOTHING MIGHT WORK, MIGHT DESTROY YOUR DATA, ABSOLUTELY NO WARRANTIES **
+** MIGHT DESTROY YOUR DATA, ABSOLUTELY NO WARRANTIES, WORK IN PROGRESS -- But I use it in production **
 
 ## Installation
 
@@ -111,18 +111,12 @@ schema uninstall HELLO_WORLD
 # Successfully removed HELLO_WORLD v0.0.2
 ```
 
-## Package development
-
-To re-install the package you are currently working on, use
+## Create a package
 
 ``` bash
-schema install ./local/path
+schema create MY_SCHEMA
 ```
 
-This will run all uninstall scripts and all install scripts from your local directory. Errors in uninstall scripts are ignored.
-
-
-## Create a package
 Each schema is a folder containing 
 - `schema.yaml` (see example package hello-world)
 - files ending on `install.sql` to be executed on installation. At least one such file must exist and install the version function
@@ -133,19 +127,28 @@ Each schema is a folder containing
 
 All sql files consist of T-SQL statements, separated by `GO`.
 
+## Package development
+
+To re-install the package you are currently working on, use
+
+``` bash
+schema install ./local/path
+```
+
+This will run all uninstall scripts and all install scripts from your local directory. Errors in uninstall scripts are ignored.
+
 ## Whishes
 1. Dependency management
-2. Create a schema from scratch `schema new` or so
-3. Create a schema from existing objects
+2. Create a schema from existing objects
     ``` bash
-      schema new --from-installed 'dbo'
+      schema create --from-installed 'dbo'
       # Collecting information:
       # - dbo.p_my_old_business_logic
       # - ...
       # Creating schema.yaml
       # done, created new local package dbo at version 0.0.1
       ```
-4. Compare all objects in an installed schema with the repository
+3. Compare all objects in an installed schema with the repository
     ``` bash
     schema install file .
     # Collecting changes
@@ -155,10 +158,7 @@ All sql files consist of T-SQL statements, separated by `GO`.
     # Setting version to 0.0.13-wip
     ```
 
-
-5. Install functions before installing procedures
-
-6. Dependency management
+4. Install functions before installing procedures
 
 ## Notes
 
