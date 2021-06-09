@@ -121,7 +121,7 @@ func getInstalledVersion(schemaName string) *TSchema {
 	// TODO [mfa] This check can not be guessed from function name
 	for _, s := range otherInstalledSchemas {
 		if(s.Name == schemaName) {
-			log.Fatal("Schema ", schemaName, " already exists in the database but is not managed by schemapm.", "See schema create --from-db-schema on how to manage a unmanaged schema")
+			log.Fatal("Schema ", schemaName, " already exists in the database but is not managed by schemapm.")
 		}
 	}
 
