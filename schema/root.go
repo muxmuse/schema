@@ -182,20 +182,36 @@ func Get(schema *TSchema) {
 	// DB.Exec(fmt.Sprintf("DROP SCHEMA [%s]", schema.Name))
 //}
 
+type SQLError interface {
+	SQLErrorNumber() int32
+	SQLErrorState() uint8
+	SQLErrorClass() uint8
+	SQLErrorMessage() string
+	SQLErrorServerName() string
+	SQLErrorProcName() string
+	SQLErrorLineNo() int32
+}
 
-func execBatchesFromFile(path string) (error) {
+
+func execBatchesFromFile(path string) (error, string, SQLError) {
 	content, err := ioutil.ReadFile(path)
 	mfa.CatchFatal(err)
 	
 	for _, batch := range strings.Split(string(content), "GO\n") {
 		_, err = DB.Exec(batch)
 		if err != nil {
-			return err
+			if sqlError, ok := err.(SQLError); ok {
+				return err, batch, sqlError
+			} else {
+				return err, batch, nil
+			}
 		}
 	}
 
-	return nil
+	return nil, "", nil
 }
+
+
 /*
 func Pull() {
 	for _, schema := range schemas {

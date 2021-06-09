@@ -16,6 +16,7 @@ import (
   "gopkg.in/yaml.v3"
   "path/filepath"
   "gopkg.in/src-d/go-git.v4/plumbing"
+  "strings"
 )
 
 func AskForConfirmation() bool {
@@ -140,7 +141,8 @@ func migrate(fromVersion string, toVersion string, schema *TSchema) {
 		if(AskForConfirmation()) {
 			for _, script := range migrationScripts {
 				fmt.Println("[running] ", script)
-				mfa.CatchFatal(execBatchesFromFile(filepath.Join(schema.localDir, script)))
+				err, _, _ := execBatchesFromFile(filepath.Join(schema.localDir, script))
+				mfa.CatchFatal(err)
 				fmt.Println("[success] ", script)
 			}
 
@@ -153,7 +155,7 @@ func migrate(fromVersion string, toVersion string, schema *TSchema) {
 func runScriptsIngoreErrors(scripts [][2]string) {
 	for index := range scripts {
 		fmt.Println("[running]", scripts[index][0])
-		scriptErr := execBatchesFromFile(scripts[index][0])
+		scriptErr, _, _ := execBatchesFromFile(scripts[index][0])
 		if scriptErr == nil {
 			fmt.Println("[success]", scripts[index][0])
 		} else {
@@ -163,17 +165,39 @@ func runScriptsIngoreErrors(scripts [][2]string) {
 	}
 }
 
+func printLines(s string, from int32, to int32, highlight int32) {
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	for i := int32(1); scanner.Scan(); i++ {
+		if i == highlight {
+			fmt.Print("> ")	
+		} else {
+			fmt.Print("  ")	
+		}
+		
+		if i >= from && i <= to {
+    	fmt.Println(scanner.Text())
+		}
+	}
+}
+
 func runScriptsOrRollBack(scripts [][2]string) error {	
 	var err error
 	var index int
 	for index = range scripts {
 		fmt.Println("[running]", scripts[index][0])
-		scriptErr := execBatchesFromFile(scripts[index][0])
+		scriptErr, batch, sqlError := execBatchesFromFile(scripts[index][0])
 		if scriptErr == nil {
 			fmt.Println("[success]", scripts[index][0])
 		} else {
 			fmt.Println("[failure]", scripts[index][0], "executed with errors")
-			fmt.Println("[failure]", scriptErr)
+			// fmt.Println("[failure]", scriptErr)
+			if sqlError != nil {
+				fmt.Println("-------------------------------------------------------------------------------")
+				printLines(batch, sqlError.SQLErrorLineNo() - 20, sqlError.SQLErrorLineNo() + 20, sqlError.SQLErrorLineNo())
+				fmt.Println("-------------------------------------------------------------------------------")
+				fmt.Println("[failure]", "Line", sqlError.SQLErrorLineNo(), "in", sqlError.SQLErrorProcName())
+				fmt.Println("[failure]", "[" + string(sqlError.SQLErrorNumber()) + "]", sqlError.SQLErrorMessage())
+			}
 			err = scriptErr
 			break
 		}
@@ -184,7 +208,7 @@ func runScriptsOrRollBack(scripts [][2]string) error {
 
 		for i := index; i >= 0; i = i -1 {
 			fmt.Println("[running]", scripts[i][1])
-			scriptErr := execBatchesFromFile(scripts[i][1])
+			scriptErr, _, _ := execBatchesFromFile(scripts[i][1])
 			if scriptErr != nil {
 				fmt.Println("[warning]", scripts[i][1], "executed with errors")
 				fmt.Println("[warning]", scriptErr)
