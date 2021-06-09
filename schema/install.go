@@ -266,8 +266,8 @@ func Uninstall(schemaName string) {
 	mfa.CatchFatal(err)
 	mfa.CatchFatal( runScriptsOrRollBack(installedSchema.UninstallScripts()) )
 
-	dropSchemaInfo(installedSchema)
 	migrate(installedSchema.GitTag, "v0.0.0", installedSchema)
+	dropSchemaInfo(installedSchema)
 	
 	fmt.Println()
 	fmt.Println("Successfully removed", installedSchema.Name, installedSchema.GitTag)
