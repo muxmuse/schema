@@ -196,7 +196,7 @@ func runScriptsOrRollBack(scripts [][2]string) error {
 				printLines(batch, sqlError.SQLErrorLineNo() - 20, sqlError.SQLErrorLineNo() + 20, sqlError.SQLErrorLineNo())
 				fmt.Println("-------------------------------------------------------------------------------")
 				fmt.Println("[failure]", "Line", sqlError.SQLErrorLineNo(), "in", sqlError.SQLErrorProcName())
-				fmt.Println("[failure]", "[" + string(sqlError.SQLErrorNumber()) + "]", sqlError.SQLErrorMessage())
+				fmt.Println("[failure]", "E" + fmt.Sprint(sqlError.SQLErrorNumber()), sqlError.SQLErrorMessage())
 			}
 			err = scriptErr
 			break
