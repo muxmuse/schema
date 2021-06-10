@@ -11,7 +11,7 @@ import (
   "gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-func CreateNew(name string, path string) {
+func CreateNew(name string, path string, version string) {
 	readme := []byte(`# ` + name + `
 
 This is a [schema pm](https://github.com/muxmuse/schema) package
@@ -31,7 +31,7 @@ This shall help to structure the code.
 name: ` + name + `
 description: Describe here what functionality the package provides
 # All releases must be tagged with v + semver
-gitTag: v0.0.1
+gitTag: ` + version + `
 # Please set the url to a location reachable for all users of this schema
 gitRepoUrl: ` + path + `
 `)
@@ -41,7 +41,6 @@ gitRepoUrl: ` + path + `
 --
 -- For each vA.B.C_vX.Y.Z.migrate.sql there must be the opposite script vX.Y.Z_vA.B.C.migrate.sql
 -- Immutable parts of the schema should be defined in files ending on install.sql
-CREATE SCHEMA [` + name + `]
 `)
 
 	migrate_1_0 := []byte(`-- Migrate mutable parts of ` + name + `
@@ -50,7 +49,6 @@ CREATE SCHEMA [` + name + `]
 --
 -- For each vA.B.C_vX.Y.Z.migrate.sql there must be the opposite script vX.Y.Z_vA.B.C.migrate.sql
 -- Immutable parts of the schema should be defined in files ending on install.sql
-DROP SCHEMA [` + name + `]
 `)
 
 	install := []byte(`-- Install immutable parts of ` + name +`
@@ -78,8 +76,8 @@ DROP FUNCTION [` + name + `].HELLO_WORLD
 
 	os.MkdirAll(path, os.ModePerm)
 	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "schema.yaml"), schemaYaml, 0644))
-	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "v0.0.0_v0.0.1.migrate.sql"), migrate_0_1, 0644))
-	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "v0.0.1_v0.0.0.migrate.sql"), migrate_1_0, 0644))
+	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "v0.0.0_" + version + ".migrate.sql"), migrate_0_1, 0644))
+	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, version + "_v0.0.0.migrate.sql"), migrate_1_0, 0644))
 	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "install.sql"), install, 0644))
 	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "uninstall.sql"), uninstall, 0644))
 	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "README.md"), readme, 0644))
@@ -95,8 +93,8 @@ DROP FUNCTION [` + name + `].HELLO_WORLD
 	w, err := repo.Worktree()
 	mfa.CatchFatal(err)
 	w.Add(filepath.Join("schema.yaml"))
-  w.Add(filepath.Join("v0.0.0_v0.0.1.migrate.sql"))
-  w.Add(filepath.Join("v0.0.1_v0.0.0.migrate.sql"))
+  w.Add(filepath.Join("v0.0.0_" + version + ".migrate.sql"))
+  w.Add(filepath.Join(version + "_v0.0.0.migrate.sql"))
   w.Add(filepath.Join("install.sql"))
   w.Add(filepath.Join("uninstall.sql"))
   w.Add(filepath.Join("README.md"))
@@ -104,9 +102,9 @@ DROP FUNCTION [` + name + `].HELLO_WORLD
   	Author: sig,
   })
   mfa.CatchFatal(err)
-  _, err = repo.CreateTag("v0.0.1", hash, &git.CreateTagOptions{
+  _, err = repo.CreateTag(version, hash, &git.CreateTagOptions{
   	Tagger: sig,
-  	Message: "v0.0.1",
+  	Message: version,
   })
   mfa.CatchFatal(err)
 }
