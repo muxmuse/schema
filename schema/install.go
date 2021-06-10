@@ -237,6 +237,11 @@ func Install(schemaToInstall *TSchema) {
 		} else {
 			runScriptsIngoreErrors(schemaToInstall.UninstallScripts())
 		}
+	} else {
+		// initially create schema
+		fmt.Println("[running] Create database schema")
+		_, err := DB.Exec("CREATE SCHEMA [" + schemaToInstall.Name + "]")
+		mfa.CatchFatal(err)
 	}
 
 	migrate(installedVersion, schemaToInstall.GitTag, schemaToInstall)
@@ -269,6 +274,10 @@ func Uninstall(schemaName string) {
 	migrate(installedSchema.GitTag, "v0.0.0", installedSchema)
 	dropSchemaInfo(installedSchema)
 	
+	fmt.Println("[running] Drop database schema")
+	_, err = DB.Exec("DROP SCHEMA [" + schemaName + "]")
+	mfa.CatchFatal(err)
+
 	fmt.Println()
 	fmt.Println("Successfully removed", installedSchema.Name, installedSchema.GitTag)
 	fmt.Println()	
