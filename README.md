@@ -119,7 +119,7 @@ schema create MY_SCHEMA
 
 Each schema is a folder containing 
 - `schema.yaml` (see example package hello-world)
-- files ending on `install.sql` to be executed on installation. At least one such file must exist and install the version function
+- files ending on `install.sql` to be executed on installation
 - matching files ending on `uninstall.sql` to be executed on uninstallation
 - subdirectories with the same structure (modules)
 - migration files `v0.0.1_v0.0.2.migrate.sql`
