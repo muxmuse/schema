@@ -137,6 +137,27 @@ schema install ./local/path
 
 This will run all uninstall scripts and all install scripts from your local directory. Errors in uninstall scripts are ignored.
 
+## Important notes regarding the SQL files
+
+- Always create contraints with explicit names, such that contraints can be dropped in future migration scripts
+    ``` sql
+    -- bad
+    CREATE TABLE MY_SCHEMA.T_1(
+      t2_id int not null foreign key references MY_SCHEMA.T_2([id]) ON DELETE CASCADE,
+      ...
+    )
+
+    -- good
+    CREATE TABLE MY_SCHEMA.T_1(
+      t2_id int,
+      ...
+    )
+    GO
+
+    ALTER TABLE MY_SCHEMA.T_1 WITH CHECK ADD CONSTRAINT fk_t_2 NOT NULL foreign key([t2_id]) references MY_SCHEMA.T_2([id]) ON DELETE CASCADE
+    GO
+    ```
+
 ## Whishes
 1. Dependency management
 2. Create a schema from existing objects
