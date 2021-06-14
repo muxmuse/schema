@@ -98,11 +98,21 @@ func (self *TSchema) UninstallScripts() [][2]string {
   return result
 }
 
-func (self *TSchema) MigrateScripts() []string {
-  result := self.rootModule.migrateScripts
+func (self *TModule) MigrateScripts() []string {
+   var result []string
 
+  for _, s := range self.migrateScripts {
+    result = append(result, filepath.Join(self.LocalDir(), s))
+  }
+
+  return result
+}
+
+func (self *TSchema) MigrateScripts() []string {
+  result := self.rootModule.MigrateScripts()
+  
   for _, m := range self.rootModule.modules {
-    result = append(result, m.migrateScripts...)
+    result = append(result, m.MigrateScripts()...)
   }
 
   return result
