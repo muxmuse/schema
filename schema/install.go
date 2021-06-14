@@ -14,7 +14,7 @@ import (
   "sort"
   "regexp"
   "gopkg.in/yaml.v3"
-  "path/filepath"
+  // "path/filepath"
   "gopkg.in/src-d/go-git.v4/plumbing"
   "strings"
 )
@@ -69,15 +69,32 @@ func createSchemaInfo(schema *TSchema) {
 // up: s_1 < s_2 s_2 <= t && s_1 >= c
 // down: s_1 > s_2 && s_2 >= t && s_1 <= c
 //
-func collectMigrationScripts(fromVersion string, toVersion string, schema *TSchema) (error, []string, string) {
+func collectMigrationScripts(fromSchema *TSchema, toSchema *TSchema) (error, []string, string, string) {
+	fromVersion := "v0.0.0"
+	toVersion := "v0.0.0"
+	if fromSchema != nil {
+		fromVersion = fromSchema.GitTag
+	}
+	if toSchema != nil {
+		toVersion = toSchema.GitTag
+	}
+
 	if !semver.IsValid(fromVersion) || !semver.IsValid(toVersion) {
-		return fmt.Errorf("Invalid version. Must be semver 2.0.0 prefixed with 'v'."), nil, ""
+		return fmt.Errorf("Invalid version. Must be semver 2.0.0 prefixed with 'v'."), nil, fromVersion, toVersion
 	}
 
 	// -1 : migrate up
 	// +1 : migrate down
 	// 0  : don't migrate
 	mode := semver.Compare(fromVersion, toVersion)
+	
+	// Take the migration files from the latest schema
+	// up: toSchema
+	// down: fromSchema
+	schema := fromSchema
+	if mode == -1 {
+		schema = toSchema
+	}
 
 	var result []string
 	re := regexp.MustCompile(`(?:.+/)?(v[^_]+)_(v[^_]+)\.migrate\.sql`)
@@ -85,7 +102,7 @@ func collectMigrationScripts(fromVersion string, toVersion string, schema *TSche
 		v := re.FindStringSubmatch(path)
 		
 		if v == nil {
-			return fmt.Errorf("Unable to find version in", path), nil, ""
+			return fmt.Errorf("Unable to find version in", path), nil, fromVersion, toVersion
 		}
 
 		if mode < 0 && semver.Compare(v[1], v[2]) < 0 && semver.Compare(v[2], toVersion) <= 0 && semver.Compare(v[1], fromVersion) >= 0 {
@@ -106,7 +123,7 @@ func collectMigrationScripts(fromVersion string, toVersion string, schema *TSche
 		}
 	})
 
-	return nil, result, fromVersion
+	return nil, result, fromVersion, toVersion
 }
 
 func getInstalledVersion(schemaName string) *TSchema {
@@ -128,8 +145,8 @@ func getInstalledVersion(schemaName string) *TSchema {
 	return nil
 }
 
-func migrate(fromVersion string, toVersion string, schema *TSchema) {
-	err, migrationScripts, fromVersion := collectMigrationScripts(fromVersion, toVersion, schema)
+func migrate(fromSchema *TSchema, toSchema *TSchema) {
+	err, migrationScripts, fromVersion, toVersion := collectMigrationScripts(fromSchema, toSchema)
 	mfa.CatchFatal(err)
 
 	if(len(migrationScripts) >  0) {
@@ -141,7 +158,7 @@ func migrate(fromVersion string, toVersion string, schema *TSchema) {
 		if(AskForConfirmation()) {
 			for _, script := range migrationScripts {
 				fmt.Println("[running] ", script)
-				err, _, _ := execBatchesFromFile(filepath.Join(schema.localDir, script))
+				err, _, _ := execBatchesFromFile(script)
 				mfa.CatchFatal(err)
 				fmt.Println("[success] ", script)
 			}
@@ -221,7 +238,6 @@ func runScriptsOrRollBack(scripts [][2]string) error {
 
 func Install(schemaToInstall *TSchema) {
 	installedSchema := getInstalledVersion(schemaToInstall.Name)
-	installedVersion := "v0.0.0"
 	
 	if installedSchema != nil && installedSchema.GitTag == schemaToInstall.GitTag && !schemaToInstall.devMode {
 		fmt.Println(schemaToInstall.Name, schemaToInstall.GitTag, "already installed.")
@@ -229,9 +245,8 @@ func Install(schemaToInstall *TSchema) {
 	}
 
 	if installedSchema != nil {
-		installedVersion = installedSchema.GitTag
 		if !schemaToInstall.devMode {
-			err, _ := Checkout(installedSchema.GitRepoUrl, plumbing.NewTagReferenceName(installedSchema.GitTag))
+			err, installedSchema := Checkout(installedSchema.GitRepoUrl, plumbing.NewTagReferenceName(installedSchema.GitTag))
 			mfa.CatchFatal(err)
 			mfa.CatchFatal( runScriptsOrRollBack(installedSchema.UninstallScripts()) )
 		} else {
@@ -244,7 +259,8 @@ func Install(schemaToInstall *TSchema) {
 		mfa.CatchFatal(err)
 	}
 
-	migrate(installedVersion, schemaToInstall.GitTag, schemaToInstall)
+
+	migrate(installedSchema, schemaToInstall)
 	mfa.CatchFatal( runScriptsOrRollBack(schemaToInstall.InstallScripts()) )
 
 	dropSchemaInfo(schemaToInstall)
@@ -271,7 +287,7 @@ func Uninstall(schemaName string) {
 	mfa.CatchFatal(err)
 	mfa.CatchFatal( runScriptsOrRollBack(installedSchema.UninstallScripts()) )
 
-	migrate(installedSchema.GitTag, "v0.0.0", installedSchema)
+	migrate(installedSchema, nil)
 	dropSchemaInfo(installedSchema)
 	
 	fmt.Println("[running] Drop database schema")
