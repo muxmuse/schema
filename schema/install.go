@@ -248,7 +248,7 @@ func Install(schemaToInstall *TSchema) {
 		if !schemaToInstall.devMode {
 			err, installedSchema := Checkout(installedSchema.GitRepoUrl, plumbing.NewTagReferenceName(installedSchema.GitTag))
 			mfa.CatchFatal(err)
-			mfa.CatchFatal( runScriptsOrRollBack(installedSchema.UninstallScripts()) )
+			runScriptsIngoreErrors(installedSchema.UninstallScripts())
 		} else {
 			runScriptsIngoreErrors(schemaToInstall.UninstallScripts())
 		}
