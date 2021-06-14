@@ -12,7 +12,7 @@ import (
 )
 
 func CreateNew(name string, path string, version string) {
-	readme := []byte(`# ` + name + `
+  readme := []byte(`# ` + name + `
 
 This is a [schema pm](https://github.com/muxmuse/schema) package
 
@@ -26,7 +26,7 @@ Files in top-level sub-direcory containing a file called schema.yaml are also co
 This shall help to structure the code.
 `)
 
-	schemaYaml  := []byte(`kind: Schema
+  schemaYaml  := []byte(`kind: Schema
 # This is the name of the database schema
 name: ` + name + `
 description: Describe here what functionality the package provides
@@ -35,7 +35,7 @@ gitTag: ` + version + `
 # Please set the url to a location reachable for all users of this schema
 gitRepoUrl: ` + path + `
 `)
-	migrate_0_1 := []byte(`-- Migrate mutable parts of ` + name + `
+  migrate_0_1 := []byte(`-- Migrate mutable parts of ` + name + `
 --
 -- Schema will ask the user for confirmation before running migrations. 
 --
@@ -43,7 +43,7 @@ gitRepoUrl: ` + path + `
 -- Immutable parts of the schema should be defined in files ending on install.sql
 `)
 
-	migrate_1_0 := []byte(`-- Migrate mutable parts of ` + name + `
+  migrate_1_0 := []byte(`-- Migrate mutable parts of ` + name + `
 --
 -- Schema will ask the user for confirmation before running migrations. 
 --
@@ -51,7 +51,7 @@ gitRepoUrl: ` + path + `
 -- Immutable parts of the schema should be defined in files ending on install.sql
 `)
 
-	install := []byte(`-- Install immutable parts of ` + name +`
+  install := []byte(`-- Install immutable parts of ` + name +`
 --
 -- The file can include multiple batches separated with GO
 --
@@ -59,12 +59,12 @@ gitRepoUrl: ` + path + `
 -- To delete data or alter tables, use files ending migrate.sql
 --
 CREATE FUNCTION [` + name + `].HELLO_WORLD()
-	RETURNS varchar(max)
-	AS BEGIN
-		RETURN 'Enter all the immutable code in install.sql files'
-	END
+  RETURNS varchar(max)
+  AS BEGIN
+    RETURN 'Enter all the immutable code in install.sql files'
+  END
 `)
-	uninstall := []byte(`-- Uninstall immutable parts of ` + name +`
+  uninstall := []byte(`-- Uninstall immutable parts of ` + name +`
 --
 -- The file can include multiple batches separated with GO
 --
@@ -74,37 +74,37 @@ CREATE FUNCTION [` + name + `].HELLO_WORLD()
 DROP FUNCTION [` + name + `].HELLO_WORLD
 `)
 
-	os.MkdirAll(path, os.ModePerm)
-	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "schema.yaml"), schemaYaml, 0644))
-	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "v0.0.0_" + version + ".migrate.sql"), migrate_0_1, 0644))
-	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, version + "_v0.0.0.migrate.sql"), migrate_1_0, 0644))
-	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "install.sql"), install, 0644))
-	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "uninstall.sql"), uninstall, 0644))
-	mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "README.md"), readme, 0644))
+  os.MkdirAll(path, os.ModePerm)
+  mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "schema.yaml"), schemaYaml, 0644))
+  mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "v0.0.0_" + version + ".migrate.sql"), migrate_0_1, 0644))
+  mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, version + "_v0.0.0.migrate.sql"), migrate_1_0, 0644))
+  mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "install.sql"), install, 0644))
+  mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "uninstall.sql"), uninstall, 0644))
+  mfa.CatchFatal(ioutil.WriteFile(filepath.Join(path, "README.md"), readme, 0644))
 
-	repo, err := git.PlainInit(path, false)
-	mfa.CatchFatal(err)
+  repo, err := git.PlainInit(path, false)
+  mfa.CatchFatal(err)
 
-	sig := &object.Signature{
-		Email: "",
-		Name: "schemapm",
-	}
+  sig := &object.Signature{
+    Email: "",
+    Name: "schemapm",
+  }
 
-	w, err := repo.Worktree()
-	mfa.CatchFatal(err)
-	w.Add(filepath.Join("schema.yaml"))
+  w, err := repo.Worktree()
+  mfa.CatchFatal(err)
+  w.Add(filepath.Join("schema.yaml"))
   w.Add(filepath.Join("v0.0.0_" + version + ".migrate.sql"))
   w.Add(filepath.Join(version + "_v0.0.0.migrate.sql"))
   w.Add(filepath.Join("install.sql"))
   w.Add(filepath.Join("uninstall.sql"))
   w.Add(filepath.Join("README.md"))
   hash, err := w.Commit("initial", &git.CommitOptions{
-  	Author: sig,
+    Author: sig,
   })
   mfa.CatchFatal(err)
   _, err = repo.CreateTag(version, hash, &git.CreateTagOptions{
-  	Tagger: sig,
-  	Message: version,
+    Tagger: sig,
+    Message: version,
   })
   mfa.CatchFatal(err)
 }
