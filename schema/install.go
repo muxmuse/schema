@@ -137,7 +137,7 @@ func getInstalledVersion(schemaName string) *TSchema {
 
 	// TODO [mfa] This check can not be guessed from function name
 	for _, s := range otherInstalledSchemas {
-		if(s.Name == schemaName) {
+		if(s.Name == schemaName && schemaName != "dbo") {
 			log.Fatal("Schema ", schemaName, " already exists in the database but is not managed by schemapm.")
 		}
 	}
@@ -255,8 +255,12 @@ func Install(schemaToInstall *TSchema) {
 	} else {
 		// initially create schema
 		fmt.Println("[running] Create database schema")
-		_, err := DB.Exec("CREATE SCHEMA [" + schemaToInstall.Name + "]")
-		mfa.CatchFatal(err)
+		if schemaToInstall.Name == "dbo" {
+			fmt.Println("refusing to create schema dbo")
+		} else {
+			_, err := DB.Exec("CREATE SCHEMA [" + schemaToInstall.Name + "]")
+			mfa.CatchFatal(err)
+		}
 	}
 
 
@@ -291,8 +295,12 @@ func Uninstall(schemaName string) {
 	dropSchemaInfo(installedSchema)
 	
 	fmt.Println("[running] Drop database schema")
-	_, err = DB.Exec("DROP SCHEMA [" + schemaName + "]")
-	mfa.CatchFatal(err)
+	if schemaName == "dbo" {
+		fmt.Println("refusing to drop schema dbo")
+	} else {
+		_, err = DB.Exec("DROP SCHEMA [" + schemaName + "]")
+		mfa.CatchFatal(err)
+	}
 
 	fmt.Println()
 	fmt.Println("Successfully removed", installedSchema.Name, installedSchema.GitTag)
