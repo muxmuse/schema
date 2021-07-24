@@ -54,6 +54,10 @@ type TSchema struct {
   dbOwner string
 }
 
+func (self *TSchema) LocalDir() string {
+  return self.localDir
+}
+
 func (self *TModule) InstallScripts() [][2]string {
    var result [][2]string
 

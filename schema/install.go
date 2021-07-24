@@ -245,13 +245,17 @@ func Install(schemaToInstall *TSchema) {
 	}
 
 	if installedSchema != nil {
+		var err error
 		if !schemaToInstall.devMode {
-			err, installedSchema := Checkout(installedSchema.GitRepoUrl, plumbing.NewTagReferenceName(installedSchema.GitTag))
+			err, installedSchema = Checkout(installedSchema.GitRepoUrl, plumbing.NewTagReferenceName(installedSchema.GitTag))
 			mfa.CatchFatal(err)
-			runScriptsIngoreErrors(installedSchema.UninstallScripts())
 		} else {
-			runScriptsIngoreErrors(schemaToInstall.UninstallScripts())
+			installedGitTag := installedSchema.GitTag
+			err, installedSchema = CheckoutDev(schemaToInstall.LocalDir())
+			mfa.CatchFatal(err)
+			installedSchema.GitTag = installedGitTag
 		}
+		runScriptsIngoreErrors(installedSchema.UninstallScripts())
 	} else {
 		// initially create schema
 		fmt.Println("[running] Create database schema")
