@@ -269,10 +269,10 @@ func Install(schemaToInstall *TSchema) {
 
 
 	migrate(installedSchema, schemaToInstall)
-	mfa.CatchFatal( runScriptsOrRollBack(schemaToInstall.InstallScripts()) )
-
 	dropSchemaInfo(schemaToInstall)
 	createSchemaInfo(schemaToInstall)
+	
+	mfa.CatchFatal( runScriptsOrRollBack(schemaToInstall.InstallScripts()) )
 
 	fmt.Println()
 	if schemaToInstall.devMode {
