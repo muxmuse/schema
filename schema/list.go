@@ -15,23 +15,47 @@ func listSchemas(db *sql.DB) ([]TSchema, []TSchema) {
 	 stmt, err := db.Prepare(`
 		select 
 		    [schema_name] = [schema].[name], 
-		    [owner_name] = [user].[name]
-		from 
-		    sys.schemas [schema]
-		    join
-		    sys.sysusers [user]
-		    on [schema].[principal_id] = [user].[uid]
-		    where [user].[name] not in (
-		        'db_accessadmin',
-		        'db_backupoperator',
-		        'db_datareader',
-		        'db_datawriter',
-		        'db_ddladmin',
-		        'db_denydatareader',
-		        'db_denydatawriter',
-		        'db_owner',
-		        'db_securityadmin',
-		        'INFORMATION_SCHEMA')`)
+		    [owner_name] = [user].[name],
+		    [modifiedAt] = max([object].modify_date), 
+    		[hash] = CONVERT(varchar(max), CAST(HASHBYTES('SHA2_512', STRING_AGG(def, ',')) AS varbinary(max)), 1)
+		from sys.schemas [schema]
+		join sys.sysusers [user]
+		  on [schema].[principal_id] = [user].[uid]
+		join (
+		    select 
+		    		o.[name],
+		        o.schema_id,
+		        modify_date,
+		        [type],
+		        def = case 
+		            when o.TYPE in ('C','D','P','FN','R','RF','TR','IF','TF','V') 
+		            then OBJECT_DEFINITION(o.object_id)
+		            -- when o.TYPE in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R') 
+		            -- then sp_helptext(o.object_id)
+		            when o.TYPE in ('T', 'U') 
+		            then (select
+		                *
+		            from INFORMATION_SCHEMA.COLUMNS 
+		            where TABLE_SCHEMA = s.name and TABLE_NAME = o.name
+		            FOR XML AUTO)
+		        end
+		    from sys.objects o
+		    join sys.schemas s on s.schema_id = o.schema_id
+		) [object]
+		on [schema].[schema_id] = [object].schema_id
+		and [object].[name] <> 'SCHEMA_INFO'
+		where [user].[name] not in (
+		    'db_accessadmin',
+		    'db_backupoperator',
+		    'db_datareader',
+		    'db_datawriter',
+		    'db_ddladmin',
+		    'db_denydatareader',
+		    'db_denydatawriter',
+		    'db_owner',
+		    'db_securityadmin',
+		    'INFORMATION_SCHEMA')
+		group by [schema].[name], [user].[name]`)
 
 	mfa.CatchFatal(err)
 	defer stmt.Close()
@@ -43,7 +67,7 @@ func listSchemas(db *sql.DB) ([]TSchema, []TSchema) {
 	var schemas []TSchema
 	for rows.Next() {
 			var schema TSchema
-			rows.Scan(&schema.Name, &schema.dbOwner)
+			rows.Scan(&schema.Name, &schema.dbOwner, &schema.modifiedAt, &schema.hash)
 			schemas = append(schemas, schema)
 	}
 	mfa.CatchFatal(rows.Err())
@@ -85,6 +109,13 @@ func List() {
 	fmt.Println("Installed schemas on " + SelectedConnectionConfig.Name)
 	for _, schema := range managedSchemas {
 		fmt.Println("-", schema.GitTag, "\t", schema.Name)
+		if len(schema.InstalledHash) > 0 && (schema.InstalledHash != schema.hash || schema.modifiedAt != schema.InstalledAt) {
+			fmt.Println("\t", "[warning] Inconsistency detected")
+			fmt.Println("\t", "installed at", "\t", schema.InstalledAt)
+			fmt.Println("\t", "modified at", "\t", schema.modifiedAt)
+			fmt.Println("\t", "installed hash", "\t", schema.InstalledHash)
+			fmt.Println("\t", "actual hash", "\t", schema.hash)
+		}
 	}
 
 	fmt.Println()

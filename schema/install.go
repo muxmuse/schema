@@ -45,6 +45,21 @@ func createSchemaInfo(schema *TSchema) {
 	mfa.CatchFatal(err)
 }
 
+func writeInstalledHashToSchemaInfo(schema *TSchema) {
+	managedSchemas, _ := listSchemas(DB)
+	for _, installedSchema := range managedSchemas {
+		if installedSchema.Name == schema.Name {
+			schema.InstalledAt = installedSchema.modifiedAt
+			schema.InstalledHash = installedSchema.hash
+		}
+	}
+
+	marshalledSchema, err := yaml.Marshal(schema)
+	mfa.CatchFatal(err)
+	_, err = DB.Exec(fmt.Sprintf(`ALTER FUNCTION [%s].[SCHEMA_INFO]() RETURNS varchar(max) AS BEGIN RETURN '%s' END`, schema.Name, marshalledSchema))
+	mfa.CatchFatal(err)
+}
+
 // 0.1
 // 1.0
 // 1.2
@@ -273,6 +288,8 @@ func Install(schemaToInstall *TSchema) {
 	createSchemaInfo(schemaToInstall)
 	
 	mfa.CatchFatal( runScriptsOrRollBack(schemaToInstall.InstallScripts()) )
+
+	writeInstalledHashToSchemaInfo(schemaToInstall)
 
 	fmt.Println()
 	if schemaToInstall.devMode {

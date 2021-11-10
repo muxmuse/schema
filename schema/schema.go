@@ -22,6 +22,7 @@ import (
   "path/filepath"
 
   "strings"
+  "time"
 )
 
 type TModule struct {
@@ -52,6 +53,12 @@ type TSchema struct {
 
   // Installed schemas
   dbOwner string
+  //   expected values
+  InstalledAt time.Time `yaml:"installedAt"`
+  InstalledHash string `yaml:"installedHash"`
+  //   actual values
+  modifiedAt time.Time
+  hash string
 }
 
 func (self *TSchema) LocalDir() string {
