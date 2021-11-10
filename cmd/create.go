@@ -30,10 +30,10 @@ var createCmd = &cobra.Command{
   Run: func(cmd *cobra.Command, args []string) {
     dir := "./" + args[0] + ".schema"
     version := "v0.0.1"
-    if len(args) > 0 {
-      dir = args[1]
-    }
     if len(args) > 1 {
+      dir = args[0]
+    }
+    if len(args) > 2 {
       version = args[2]
     }
     schema.CreateNew(args[0], dir, version)
