@@ -33,7 +33,7 @@ description: Describe here what functionality the package provides
 # All releases must be tagged with v + semver
 gitTag: ` + version + `
 # Please set the url to a location reachable for all users of this schema
-gitRepoUrl: ` + path + `
+gitRepoUrl: .
 `)
   migrate_0_1 := []byte(`-- Migrate mutable parts of ` + name + `
 --
