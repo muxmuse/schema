@@ -1,6 +1,6 @@
 # schema – a Package Manager for SQL Server
 
-Version control, consistency checks and package publishing for SQL Server
+Version control, integrity checks and package publishing for SQL Server
 
 WARNING: MIGHT DESTROY YOUR DATA, ABSOLUTELY NO WARRANTIES, WORK IN PROGRESS -- But I use it in production
 
