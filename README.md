@@ -64,27 +64,27 @@ schema list
 
 Install a schema
 ``` bash
-schema install git@github.com:muxmuse/hello_world.schema.git v0.0.2
-# Checking out https://github.com/muxmuse/hello_world.schema.git refs/tags/v0.0.2
-# [schema] HELLO_WORLD v0.0.2
+schema install git@github.com:muxmuse/hello_world.schema.git v0.0.3
+# Checking out https://github.com/muxmuse/hello_world.schema.git refs/tags/v0.0.3
+# [schema] HELLO_WORLD v0.0.3
 # [module] hello-module
-# About to run migrations v0.0.0 -> v0.0.2
+# About to run migrations v0.0.0 -> v0.0.3
 # - v0.0.0_v0.0.1.migrate.sql
-# - v0.0.1_v0.0.2.migrate.sql
+# - v0.0.1_v0.0.3.migrate.sql
 # Confirm (y/n): y
 # [running]  v0.0.0_v0.0.1.migrate.sql
 # [success]  v0.0.0_v0.0.1.migrate.sql
-# [running]  v0.0.1_v0.0.2.migrate.sql
-# [success]  v0.0.1_v0.0.2.migrate.sql
-# [running] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.2/install.sql
-# [success] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.2/install.sql
+# [running]  v0.0.1_v0.0.3.migrate.sql
+# [success]  v0.0.1_v0.0.3.migrate.sql
+# [running] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.3/install.sql
+# [success] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.3/install.sql
 # 
-# Successfully installed HELLO_WORLD v0.0.2
+# Successfully installed HELLO_WORLD v0.0.3
 # 
 
 schema list
 # Installed schemas on ...
-# - v0.0.2         HELLO_WORLD
+# - v0.0.3         HELLO_WORLD
 # 
 # Unmanaged schemas: dbo, ..., sys
 
@@ -92,25 +92,25 @@ schema show HELLO_WORLD
 
 # name: HELLO_WORLD
 # description: Demo package for schemapm
-# gitTag: v0.0.2
+# gitTag: v0.0.3
 # gitRepoUrl: git@github.com:muxmuse/hello_world.schema.git
 
 schema uninstall HELLO_WORLD
-# Checking out git@github.com:muxmuse/hello_world.schema.git refs/tags/v0.0.2
-# [schema] HELLO_WORLD v0.0.2
+# Checking out git@github.com:muxmuse/hello_world.schema.git refs/tags/v0.0.3
+# [schema] HELLO_WORLD v0.0.3
 # [module] hello-module
-# [running] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.2/uninstall.sql
-# [success] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.2/uninstall.sql
-# About to run migrations v0.0.2 -> v0.0.0
-# - v0.0.2_v0.0.1.migrate.sql
+# [running] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.3/uninstall.sql
+# [success] /home/mfa/.schemapm/schemas/HELLO_WORLD-refs-tags-v0.0.3/uninstall.sql
+# About to run migrations v0.0.3 -> v0.0.0
+# - v0.0.3_v0.0.1.migrate.sql
 # - v0.0.1_v0.0.0.migrate.sql
 # Confirm (y/n): y
-# [running]  v0.0.2_v0.0.1.migrate.sql
-# [success]  v0.0.2_v0.0.1.migrate.sql
+# [running]  v0.0.3_v0.0.1.migrate.sql
+# [success]  v0.0.3_v0.0.1.migrate.sql
 # [running]  v0.0.1_v0.0.0.migrate.sql
 # [success]  v0.0.1_v0.0.0.migrate.sql
 # 
-# Successfully removed HELLO_WORLD v0.0.2
+# Successfully removed HELLO_WORLD v0.0.3
 ```
 
 ## Create a package
