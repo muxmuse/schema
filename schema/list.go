@@ -11,51 +11,82 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const schemaListingQuery = `select 
+	    [schema_name] = [schema].[name], 
+	    [owner_name] = [user].[name],
+	    [modifiedAt] = max([object].modify_date), 
+  		[hash] = CONVERT(varchar(max), CAST(HASHBYTES('SHA2_512', STRING_AGG(def, ',')) AS varbinary(max)), 1)
+	from sys.schemas [schema]
+	join sys.sysusers [user]
+	  on [schema].[principal_id] = [user].[uid]
+	join (
+	    select 
+	    		o.[name],
+	        o.schema_id,
+	        modify_date,
+	        [type],
+	        def = case 
+	            when o.TYPE in ('C','D','P','FN','R','RF','TR','IF','TF','V') 
+	            then OBJECT_DEFINITION(o.object_id)
+	            -- when o.TYPE in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R') 
+	            -- then sp_helptext(o.object_id)
+	            when o.TYPE in ('T', 'U') 
+	            then (select
+	                *
+	            from INFORMATION_SCHEMA.COLUMNS 
+	            where TABLE_SCHEMA = s.name and TABLE_NAME = o.name
+	            FOR XML AUTO)
+	        end
+	    from sys.objects o
+	    join sys.schemas s on s.schema_id = o.schema_id
+	) [object]
+	on [schema].[schema_id] = [object].schema_id
+	and [object].[name] <> 'SCHEMA_INFO'
+	where [user].[name] not in (
+	    'db_accessadmin',
+	    'db_backupoperator',
+	    'db_datareader',
+	    'db_datawriter',
+	    'db_ddladmin',
+	    'db_denydatareader',
+	    'db_denydatawriter',
+	    'db_owner',
+	    'db_securityadmin',
+	    'INFORMATION_SCHEMA')
+	group by [schema].[name], [user].[name]`;
+
+const schemaListingQueryLegacy = `select 
+	    [schema_name] = [schema].[name], 
+	    [owner_name] = [user].[name],
+	    [modifiedAt] = null,
+	    [hash] = null
+	from 
+	    sys.schemas [schema]
+	    join
+	    sys.sysusers [user]
+	    on [schema].[principal_id] = [user].[uid]
+	    where [user].[name] not in (
+	        'db_accessadmin',
+	        'db_backupoperator',
+	        'db_datareader',
+	        'db_datawriter',
+	        'db_ddladmin',
+	        'db_denydatareader',
+	        'db_denydatawriter',
+	        'db_owner',
+	        'db_securityadmin',
+	        'INFORMATION_SCHEMA')`;
+
 func listSchemas(db *sql.DB) ([]TSchema, []TSchema) {
-	 stmt, err := db.Prepare(`
-		select 
-		    [schema_name] = [schema].[name], 
-		    [owner_name] = [user].[name],
-		    [modifiedAt] = max([object].modify_date), 
-    		[hash] = CONVERT(varchar(max), CAST(HASHBYTES('SHA2_512', STRING_AGG(def, ',')) AS varbinary(max)), 1)
-		from sys.schemas [schema]
-		join sys.sysusers [user]
-		  on [schema].[principal_id] = [user].[uid]
-		join (
-		    select 
-		    		o.[name],
-		        o.schema_id,
-		        modify_date,
-		        [type],
-		        def = case 
-		            when o.TYPE in ('C','D','P','FN','R','RF','TR','IF','TF','V') 
-		            then OBJECT_DEFINITION(o.object_id)
-		            -- when o.TYPE in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R') 
-		            -- then sp_helptext(o.object_id)
-		            when o.TYPE in ('T', 'U') 
-		            then (select
-		                *
-		            from INFORMATION_SCHEMA.COLUMNS 
-		            where TABLE_SCHEMA = s.name and TABLE_NAME = o.name
-		            FOR XML AUTO)
-		        end
-		    from sys.objects o
-		    join sys.schemas s on s.schema_id = o.schema_id
-		) [object]
-		on [schema].[schema_id] = [object].schema_id
-		and [object].[name] <> 'SCHEMA_INFO'
-		where [user].[name] not in (
-		    'db_accessadmin',
-		    'db_backupoperator',
-		    'db_datareader',
-		    'db_datawriter',
-		    'db_ddladmin',
-		    'db_denydatareader',
-		    'db_denydatawriter',
-		    'db_owner',
-		    'db_securityadmin',
-		    'INFORMATION_SCHEMA')
-		group by [schema].[name], [user].[name]`)
+	var query string;
+	if (SqlServerVersion.edition == "SQL Azure" || SqlServerVersion.version[0] >= 14) {
+		query = schemaListingQuery;
+	} else {
+		fmt.Println("Integrity-check is not supported for this version of SQL Server")
+		query = schemaListingQueryLegacy;
+	}
+	
+	stmt, err := db.Prepare(query)
 
 	mfa.CatchFatal(err)
 	defer stmt.Close()

@@ -1,7 +1,7 @@
 package schema
 
 import (
-	// "fmt"
+	"fmt"
 	"log"
 
 	// "crypto/tls"
@@ -23,6 +23,14 @@ import (
 )
 
 var DB *sql.DB
+var SqlServerVersion TSqlServerVersion
+
+type TSqlServerVersion struct {
+	edition string
+	versionStr string
+	version [4]uint
+	level string
+}
 
 func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 	db, err := sql.Open(
@@ -41,6 +49,26 @@ func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 		_, err = db.Exec("use " + con.Name)
 		mfa.CatchFatal(err)
 	}
+
+	err = db.QueryRow(`
+		select 
+	    [edition] = SERVERPROPERTY('Edition'),
+	    [version] = SERVERPROPERTY ('productversion'),
+	    [level] = SERVERPROPERTY('ProductLevel')
+	`).Scan(&SqlServerVersion.edition, &SqlServerVersion.versionStr, &SqlServerVersion.level)
+	mfa.CatchFatal(err)
+
+	_, err = fmt.Sscanf(
+		SqlServerVersion.versionStr, 
+		"%d.%d.%d.%d",
+		&(SqlServerVersion.version)[0],
+		&(SqlServerVersion.version)[1],
+		&(SqlServerVersion.version)[2],
+		&(SqlServerVersion.version)[3])
+
+	fmt.Printf("Connected to %s\n%s %s\n\n", con.Url, SqlServerVersion.edition, SqlServerVersion.versionStr)
+
+	mfa.CatchFatal(err)
 	
 	return db
 }
