@@ -10,7 +10,7 @@ WARNING: MIGHT DESTROY YOUR DATA, ABSOLUTELY NO WARRANTIES, WORK IN PROGRESS -- 
 
 2. Install schema
     ``` bash
-    go get https://github.com/muxmuse/schema
+    go install github.com/muxmuse/schema@latest
     ```
 3. Configure your database connections
     ``` yaml
