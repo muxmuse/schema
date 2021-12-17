@@ -3,7 +3,7 @@ module github.com/muxmuse/schema
 go 1.16
 
 require (
-	github.com/denisenkom/go-mssqldb v0.10.0
+	github.com/denisenkom/go-mssqldb v0.11.0
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gookit/color v1.2.7
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
