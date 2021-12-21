@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 
   "strings"
+  "regexp"
   
   // "errors"
 )
@@ -220,12 +221,13 @@ type SQLError interface {
 	SQLErrorLineNo() int32
 }
 
+var batchSeparator = regexp.MustCompile(`GO[\t\f ]*\n`)
 
 func execBatchesFromFile(path string) (error, string, SQLError) {
 	content, err := ioutil.ReadFile(path)
 	mfa.CatchFatal(err)
 	
-	for _, batch := range strings.Split(string(content), "GO\n") {
+	for _, batch := range batchSeparator.Split(string(content), -1) {
 		_, err = DB.Exec(batch)
 		if err != nil {
 			if sqlError, ok := err.(SQLError); ok {
