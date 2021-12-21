@@ -226,8 +226,10 @@ var batchSeparator = regexp.MustCompile(`GO[\t\f ]*\n`)
 func execBatchesFromFile(path string) (error, string, SQLError) {
 	content, err := ioutil.ReadFile(path)
 	mfa.CatchFatal(err)
+	var readLines int = 0
 	
 	for _, batch := range batchSeparator.Split(string(content), -1) {
+		Lint([]byte(batch), readLines)
 		_, err = DB.Exec(batch)
 		if err != nil {
 			if sqlError, ok := err.(SQLError); ok {
@@ -236,6 +238,7 @@ func execBatchesFromFile(path string) (error, string, SQLError) {
 				return err, batch, nil
 			}
 		}
+		readLines += strings.Count(batch, "\n") +1
 	}
 
 	return nil, "", nil
