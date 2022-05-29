@@ -221,7 +221,7 @@ type SQLError interface {
 	SQLErrorLineNo() int32
 }
 
-var batchSeparator = regexp.MustCompile(`GO[\t\f ]*\n`)
+var batchSeparator = regexp.MustCompile(`(\s+|^)GO\s+`)
 
 func execBatchesFromFile(path string) (error, string, SQLError) {
 	content, err := ioutil.ReadFile(path)
