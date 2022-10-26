@@ -2,29 +2,13 @@ package schema
 
 import (
 	"fmt"
-	"log"
 
-	// "crypto/tls"
-	// "net/http"
-	// "gopkg.in/src-d/go-git.v4/plumbing/transport/client"
-	// githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
-
-	"database/sql"
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/muxmuse/schema/mfa"
-
-	// "github.com/gookit/color"
-
-	"io/ioutil"
-
-  "strings"
-  "regexp"
-  
-  // "errors"
 )
 
 func Diff() {
-	stmt, err := db.Prepare(`select
+	stmt, err := DB.Prepare(`select
 	    [name] = '[' + l.schema_name + '].[' + o.name + ']',
 			o.modify_date
 		from sys.objects o
