@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-  rootCmd.AddCommand(listCmd)
+  rootCmd.AddCommand(diffCmd)
 }
 
-var listCmd = &cobra.Command{
+var diffCmd = &cobra.Command{
   Use:   "diff",
   Short: "List modified objects",
   Long:  ``,
