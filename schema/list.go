@@ -140,12 +140,8 @@ func List() {
 	fmt.Println("Installed schemas on " + SelectedConnectionConfig.Name)
 	for _, schema := range managedSchemas {
 		fmt.Println("-", schema.GitTag, "\t", schema.Name)
-		if len(schema.InstalledHash) > 0 && (schema.InstalledHash != schema.hash || schema.modifiedAt != schema.InstalledAt) {
-			fmt.Println("  WARNING: Integrity compromised")
-			fmt.Println("  Last modified at", schema.modifiedAt)
-			if schema.InstalledHash != schema.hash {
-				fmt.Println("  Contents has changed: hashes differ.")
-			}
+		if len(schema.InstalledHash) > 0 && (schema.InstalledHash != schema.hash) {
+			fmt.Println("  WARNING: Integrity compromised, hashes differ.")
 			fmt.Println();
 		}
 	}
