@@ -31,6 +31,7 @@ type TSqlServerVersion struct {
 	versionStr string
 	version [4]uint
 	level string
+	extendedVersion string
 }
 
 func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
@@ -55,8 +56,9 @@ func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 		select 
 	    [edition] = SERVERPROPERTY('Edition'),
 	    [version] = SERVERPROPERTY ('productversion'),
-	    [level] = SERVERPROPERTY('ProductLevel')
-	`).Scan(&SqlServerVersion.edition, &SqlServerVersion.versionStr, &SqlServerVersion.level)
+	    [level] = SERVERPROPERTY('ProductLevel'),
+	    [extended_version] = @@VERSION
+	`).Scan(&SqlServerVersion.edition, &SqlServerVersion.versionStr, &SqlServerVersion.level, &SqlServerVersion.extendedVersion)
 	mfa.CatchFatal(err)
 
 	_, err = fmt.Sscanf(
@@ -67,7 +69,7 @@ func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 		&(SqlServerVersion.version)[2],
 		&(SqlServerVersion.version)[3])
 
-	fmt.Printf("Connected to %s\n%s %s\n\n", con.Url, SqlServerVersion.edition, SqlServerVersion.versionStr)
+	fmt.Printf("Connected to %s\n%s\n%s %s\n\n", con.Url, strings.Split(SqlServerVersion.extendedVersion, "\n")[0], SqlServerVersion.edition, SqlServerVersion.versionStr)
 
 	mfa.CatchFatal(err)
 	
