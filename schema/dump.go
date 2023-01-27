@@ -288,7 +288,7 @@ func (table *TTable) Dump() (error) {
 			}
 	}
 
-	if i != batchSize {
+	if i != batchSize && i > 1 {
 		fmt.Print("]' " + postfix)
 	}
 	
