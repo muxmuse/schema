@@ -69,7 +69,7 @@ func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 		&(SqlServerVersion.version)[2],
 		&(SqlServerVersion.version)[3])
 
-	fmt.Printf("Connected to %s\n%s\n%s %s\n\n", con.Url, strings.Split(SqlServerVersion.extendedVersion, "\n")[0], SqlServerVersion.edition, SqlServerVersion.versionStr)
+	log.Printf("Connected to %s\n%s\n%s %s\n\n", con.Url, strings.Split(SqlServerVersion.extendedVersion, "\n")[0], SqlServerVersion.edition, SqlServerVersion.versionStr)
 
 	mfa.CatchFatal(err)
 	
