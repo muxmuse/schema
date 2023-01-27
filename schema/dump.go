@@ -277,9 +277,10 @@ func (table *TTable) Dump() (error) {
 			var rowValue string
 
 			rows.Scan(&rowValue)
+			rowValue = strings.ReplaceAll(rowValue, "'", "''")
 			
 			if i == 1 {
-				fmt.Print(prefix + "'[" + rowValue)
+				fmt.Print(prefix + "N'[" + rowValue)
 			} else if i == batchSize {
 				fmt.Print("," + rowValue + "]' " + postfix)
 				i = 0
