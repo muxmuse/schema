@@ -154,6 +154,11 @@ func (c *TColumn) WithType() (string) {
 		return "nvarchar(max)"
 	}
 
+	if c.Type == "geometry" ||
+	   c.Type == "geography" {
+	  return "varbinary(max)" // will be converted
+	}
+
 	return c.Type
 }
 
