@@ -105,7 +105,7 @@ func listSchemas(db *sql.DB) ([]TSchema, []TSchema) {
 
 	var dbname string
 	mfa.CatchFatal(DB.QueryRow("select DB_NAME()").Scan(&dbname))
-	if SelectedConnectionConfig.Name != dbname {
+	if SelectedConnectionConfig.Database != dbname {
 		log.Fatal("Actual database is " + dbname)
 	}
 
@@ -137,7 +137,7 @@ func List() {
 	managedSchemas, otherSchemas := listSchemas(DB)
 
 	fmt.Println()
-	fmt.Println("Installed schemas on " + SelectedConnectionConfig.Name)
+	fmt.Println("Installed schemas on " + SelectedConnectionConfig.Database)
 	for _, schema := range managedSchemas {
 		fmt.Println("-", schema.GitTag, "\t", schema.Name)
 		if len(schema.InstalledHash) > 0 && (schema.InstalledHash != schema.hash) {

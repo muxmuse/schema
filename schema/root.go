@@ -46,9 +46,9 @@ func getConnectedDatabase(con TConnectionConfig) (*sql.DB) {
 
 	var dbname string
 	mfa.CatchFatal(db.QueryRow("select DB_NAME()").Scan(&dbname))
-	if SelectedConnectionConfig.Name != dbname {
+	if SelectedConnectionConfig.Database != dbname {
 		log.Print("Actual database is " + dbname + " trying use...")
-		_, err = db.Exec("use " + con.Name)
+		_, err = db.Exec("use " + con.Database)
 		mfa.CatchFatal(err)
 	}
 
