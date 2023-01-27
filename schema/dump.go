@@ -230,12 +230,14 @@ func (table *TTable) DumpStatement() (string, error) {
 
 func (table *TTable) InsertStatement() (string, string, error) {
 	columnLoadStatements := make([]string, 0)
+	usedColumnNames := make([]string, 0)
 	for _, c := range table.Columns {
 		columnLoadStatement, err := c.LoadStatement()
 		
 		if err != nil {
 			return "", "", err
 		} else if len(columnLoadStatement) > 0 {
+			usedColumnNames = append(usedColumnNames, c.FqName()) 
 			columnLoadStatements = append(columnLoadStatements, columnLoadStatement)
 		}
 	}
@@ -245,7 +247,7 @@ func (table *TTable) InsertStatement() (string, string, error) {
 		columnWithStatements[i] = c.FqName() + " " + c.WithType()
 	}
 
-	prefix := "insert " + table.FqName() + "\nselect " + strings.Join(columnLoadStatements, ",") + "\nfrom OPENJSON("
+	prefix := "insert " + table.FqName() + " (" + strings.Join(usedColumnNames, ",") + ") " + "\nselect " + strings.Join(columnLoadStatements, ",") + "\nfrom OPENJSON("
 	postifx := ")\nwith (" + strings.Join(columnWithStatements, ",") + ")\nGO\n\n"
 
 	return prefix, postifx, nil
