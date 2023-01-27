@@ -113,6 +113,21 @@ schema uninstall HELLO_WORLD
 # Successfully removed HELLO_WORLD v0.0.3
 ```
 
+## Dump table data (alpha)
+
+Dump the data of supported datatypes using SQL-Server's built-in JSON serialization.
+The data of all tables will be dumped in an order which attempts to respect foreign key constraints.
+
+``` bash
+schema dump-data-json > dump.sql
+```
+
+The data can be loaded with the exec command wich reads batches from stdin
+
+``` bash
+schema exec < dump.sql
+```
+
 ## Create a package
 
 ``` bash
