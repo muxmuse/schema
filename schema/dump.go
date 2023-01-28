@@ -78,6 +78,7 @@ type TColumn struct {
 	Name string
 	Type string 
 	IsComputed bool
+	IsIdentity bool
 }
 
 type TTable struct {
@@ -86,6 +87,16 @@ type TTable struct {
 	Dependencies string
 	Level string
 	Columns []TColumn
+}
+
+func (t *TTable) HasIdentityColumn() bool {
+	for _, c := range t.Columns {
+		if c.IsIdentity {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *TColumn) FqName() (string) {
@@ -290,6 +301,11 @@ func (table *TTable) Dump() (error) {
 		return err
 	}
 
+	// TODO [mfa] restore IDENTITY_INSERT state if any previously existed
+	if table.HasIdentityColumn() {
+		fmt.Println("SET IDENTITY_INSERT " + table.FqName() + " ON;")
+	}
+
 	i := 1
 	batchSize := 10
 	for ; rows.Next(); i++ {
@@ -311,6 +327,10 @@ func (table *TTable) Dump() (error) {
 	if i < (batchSize +1) && i > 1 {
 		fmt.Print("]' " + postfix)
 	}
+
+	if table.HasIdentityColumn() {
+		fmt.Println("SET IDENTITY_INSERT " + table.FqName() + " OFF;")
+	}
 	
  	return nil
 }
@@ -321,7 +341,8 @@ func (table *TTable) LoadColumnsFromDb() {
 		SELECT
 			column_name,
 			data_type,
-			is_computed
+			is_computed,
+			is_identity
 		from (
 			SELECT 
 			  schema_name = SCHEMA_NAME(o.schema_id), 
@@ -329,7 +350,8 @@ func (table *TTable) LoadColumnsFromDb() {
 			  column_name = c.name, 
 			  ordinal_position = COLUMNPROPERTY(c.object_id, c.name, 'ordinal'), 
 			  data_type = ISNULL(TYPE_NAME(c.system_type_id), t.name), 
-			  is_computed = c.is_computed
+			  is_computed = c.is_computed,
+			  is_identity = c.is_identity
 			FROM 
 			  sys.objects o JOIN sys.columns c ON c.object_id = o.object_id 
 			  LEFT JOIN sys.types t ON c.user_type_id = t.user_type_id 
@@ -350,7 +372,7 @@ func (table *TTable) LoadColumnsFromDb() {
 
 	for rows.Next() {
 		var column TColumn
-		rows.Scan(&column.Name, &column.Type, &column.IsComputed)
+		rows.Scan(&column.Name, &column.Type, &column.IsComputed, &column.IsIdentity)
 		table.Columns = append(table.Columns, column)
 	}
 }
