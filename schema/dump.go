@@ -276,8 +276,15 @@ func (table *TTable) InsertStatement() (string, string, error) {
 	}
 
 	// TODO [mfa] restore IDENTITY_INSERT state if any previously existed
-	prefix := "SET IDENTITY_INSERT " + table.FqName() + " ON;\ninsert " + table.FqName() + " (" + strings.Join(usedColumnNames, ",") + ") " + "\nselect " + strings.Join(columnLoadStatements, ",") + "\nfrom OPENJSON("
-	postifx := ")\nwith (" + strings.Join(columnWithStatements, ",") + ")\nSET IDENTITY_INSERT " + table.FqName() + " OFF;\nGO\n\n"
+	prefix := "insert " + table.FqName() + " (" + strings.Join(usedColumnNames, ",") + ") " + "\nselect " + strings.Join(columnLoadStatements, ",") + "\nfrom OPENJSON("
+	postifx := ")\nwith (" + strings.Join(columnWithStatements, ",") + ");\n"
+
+	if table.HasIdentityColumn() {
+		prefix = "SET IDENTITY_INSERT " + table.FqName() + " ON;\n" + prefix
+		postifx += "SET IDENTITY_INSERT " + table.FqName() + " OFF;\n"
+	}
+
+	postifx += "GO\n\n"
 
 	return prefix, postifx, nil
 }
