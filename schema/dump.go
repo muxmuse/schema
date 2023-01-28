@@ -58,6 +58,10 @@ T-SQL Datatypes
 	- Spatial Geography Types
 	- table
 
+- Aliases
+	- sysname: nvarchar(128) NOT NULL
+	- rowversion: timestamp
+
 */
 
 
@@ -73,6 +77,7 @@ import (
 type TColumn struct {
 	Name string
 	Type string 
+	IsComputed bool
 }
 
 type TTable struct {
@@ -88,6 +93,11 @@ func (c *TColumn) FqName() (string) {
 }
 
 func (c *TColumn) DumpStatement() (string, error) {
+	if c.IsComputed {
+	   log.Println("Computed column " + c.Name + " will be ignored during dump")
+	   return "", nil
+	}
+
 	if c.Type == "geometry" || 
 	   c.Type == "geography" {
 		return c.FqName() + " = cast(" + c.FqName() + " as varbinary(max))", nil
@@ -163,6 +173,11 @@ func (c *TColumn) WithType() (string) {
 }
 
 func (c *TColumn) LoadStatement() (string, error) {
+	if c.IsComputed {
+	   log.Println("Computed column " + c.Name + " will be ignored during dump")
+	   return "", nil
+	}
+
 	if c.Type == "geometry" || 
 	   c.Type == "geography" {
 		return c.FqName() + " = cast(" + c.FqName() + " as " + c.Type  + ")", nil
@@ -236,20 +251,17 @@ func (table *TTable) DumpStatement() (string, error) {
 func (table *TTable) InsertStatement() (string, string, error) {
 	columnLoadStatements := make([]string, 0)
 	usedColumnNames := make([]string, 0)
+	columnWithStatements := make([]string, 0)
 	for _, c := range table.Columns {
 		columnLoadStatement, err := c.LoadStatement()
 		
 		if err != nil {
 			return "", "", err
 		} else if len(columnLoadStatement) > 0 {
+			columnWithStatements = append(columnWithStatements, c.FqName() + " " + c.WithType())
 			usedColumnNames = append(usedColumnNames, c.FqName()) 
 			columnLoadStatements = append(columnLoadStatements, columnLoadStatement)
 		}
-	}
-
-	columnWithStatements := make([]string, len(table.Columns))
-	for i, c := range table.Columns {
-		columnWithStatements[i] = c.FqName() + " " + c.WithType()
 	}
 
 	prefix := "insert " + table.FqName() + " (" + strings.Join(usedColumnNames, ",") + ") " + "\nselect " + strings.Join(columnLoadStatements, ",") + "\nfrom OPENJSON("
@@ -304,26 +316,41 @@ func (table *TTable) Dump() (error) {
 }
 
 func (table *TTable) LoadColumnsFromDb() {
-	query := `select 
-		COLUMN_NAME, 
-		DATA_TYPE 
-		from INFORMATION_SCHEMA.COLUMNS 
-		where TABLE_SCHEMA = '` + table.Schema + `'
-		  and TABLE_NAME = '` + table.Name + `' 
-		order by ORDINAL_POSITION`;
+	// extend properties exec sp_helptext 'INFORMATION_SCHEMA.COLUMNS'
+	query := `
+		SELECT
+			column_name,
+			data_type,
+			is_computed
+		from (
+			SELECT 
+			  schema_name = SCHEMA_NAME(o.schema_id), 
+			  table_name = o.name, 
+			  column_name = c.name, 
+			  ordinal_position = COLUMNPROPERTY(c.object_id, c.name, 'ordinal'), 
+			  data_type = ISNULL(TYPE_NAME(c.system_type_id), t.name), 
+			  is_computed = c.is_computed
+			FROM 
+			  sys.objects o JOIN sys.columns c ON c.object_id = o.object_id 
+			  LEFT JOIN sys.types t ON c.user_type_id = t.user_type_id 
+			WHERE 
+			  o.type IN ('U')
+		) t
+		where schema_name = @p1
+	  and table_name = @p2
+		order by ordinal_position`
 
-	// TODO [mfa] use parametrized statement
 	stmt, err := DB.Prepare(query)
 
 	mfa.CatchFatal(err)
 	defer stmt.Close()
-	rows, err := stmt.Query()
+	rows, err := stmt.Query(table.Schema, table.Name)
 	mfa.CatchFatal(err)
 	defer rows.Close()
 
 	for rows.Next() {
 		var column TColumn
-		rows.Scan(&column.Name, &column.Type)
+		rows.Scan(&column.Name, &column.Type, &column.IsComputed)
 		table.Columns = append(table.Columns, column)
 	}
 }
