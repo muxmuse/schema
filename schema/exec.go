@@ -26,11 +26,7 @@ func execBatchesFromStdin() (error, string, SQLError) {
   	if isPrefix {
   		batch += string(line)
   		continue
-  	} else {
-  		batch += string(line) + "\n"
-  	}
-
-  	if string(line) == "GO" {
+  	} else if string(line) == "GO" {
   		_, err = DB.Exec(batch)
 			if err != nil {
 				if sqlError, ok := err.(SQLError); ok {
@@ -40,6 +36,8 @@ func execBatchesFromStdin() (error, string, SQLError) {
 				}
 			}
 			batch = ""
+  	} else {
+  		batch += string(line) + "\n"
   	}
   }
 
