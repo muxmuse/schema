@@ -275,8 +275,9 @@ func (table *TTable) InsertStatement() (string, string, error) {
 		}
 	}
 
-	prefix := "insert " + table.FqName() + " (" + strings.Join(usedColumnNames, ",") + ") " + "\nselect " + strings.Join(columnLoadStatements, ",") + "\nfrom OPENJSON("
-	postifx := ")\nwith (" + strings.Join(columnWithStatements, ",") + ")\nGO\n\n"
+	// TODO [mfa] restore IDENTITY_INSERT state if any previously existed
+	prefix := "SET IDENTITY_INSERT " + table.FqName() + " ON;\ninsert " + table.FqName() + " (" + strings.Join(usedColumnNames, ",") + ") " + "\nselect " + strings.Join(columnLoadStatements, ",") + "\nfrom OPENJSON("
+	postifx := ")\nwith (" + strings.Join(columnWithStatements, ",") + ")\nSET IDENTITY_INSERT " + table.FqName() + " OFF;\nGO\n\n"
 
 	return prefix, postifx, nil
 }
@@ -301,11 +302,6 @@ func (table *TTable) Dump() (error) {
 		return err
 	}
 
-	// TODO [mfa] restore IDENTITY_INSERT state if any previously existed
-	if table.HasIdentityColumn() {
-		fmt.Println("SET IDENTITY_INSERT " + table.FqName() + " ON;")
-	}
-
 	i := 1
 	batchSize := 10
 	for ; rows.Next(); i++ {
@@ -328,11 +324,7 @@ func (table *TTable) Dump() (error) {
 		fmt.Print("]' " + postfix)
 	}
 
-	if table.HasIdentityColumn() {
-		fmt.Println("SET IDENTITY_INSERT " + table.FqName() + " OFF;")
-	}
-	
- 	return nil
+	return nil
 }
 
 func (table *TTable) LoadColumnsFromDb() {
