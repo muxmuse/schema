@@ -84,7 +84,7 @@ type TColumn struct {
 type TTable struct {
 	Schema string
 	Name string
-	Dependencies string
+	// Dependencies string
 	Level string
 	Columns []TColumn
 }
@@ -442,15 +442,16 @@ func DumpDataJson() (error) {
 		        ON d.Depends = r.[name]
 		    )
 		-- The final result, with some extra fields for more information
-		SELECT DISTINCT SCHEMA_NAME(O.schema_id) AS [
-					schema]
+		SELECT
+        SCHEMA_NAME(O.schema_id) AS [schema]
 		    , R.[name]
-		   	, R.[dependencies]
-		    , R.[level]
+		   	-- , R.[dependencies]
+		    , max(R.[level])
 		FROM recursiv R
 		INNER JOIN sys.objects O
 		    ON R.[name] = O.name
-		ORDER BY [level], [name]`)
+        group by SCHEMA_NAME(O.schema_id), R.[name]
+		ORDER BY max(R.[level]), R.[name]`)
 
 	mfa.CatchFatal(err)
 	defer stmt.Close()
@@ -462,7 +463,7 @@ func DumpDataJson() (error) {
 	var tables []TTable
 	for rows.Next() {
 			var table TTable
-			rows.Scan(&table.Schema, &table.Name, &table.Dependencies, &table.Level)
+			rows.Scan(&table.Schema, &table.Name, &table.Level)
 			tables = append(tables, table)
 	}
 	mfa.CatchFatal(rows.Err())
