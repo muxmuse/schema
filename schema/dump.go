@@ -376,8 +376,35 @@ func (table *TTable) LoadColumnsFromDb() {
 	}
 }
 
+func PrintContraintViolations() bool {
+	rows, err := DB.Query(`DBCC CHECKCONSTRAINTS WITH ALL_CONSTRAINTS;`)
+	mfa.CatchFatal(err)
+	defer rows.Close()
+
+	anyViolationsFound := false
+
+	for rows.Next() {
+			anyViolationsFound = true
+			var table string
+			var constraint string
+			var where string
+			rows.Scan(&table, &constraint, &where)
+			log.Println("Constraint violation:")
+			log.Println(" table:     " + table)
+			log.Println(" contraint: " + constraint)
+			log.Println(" where:     " + where)
+			log.Println()
+	}
+
+	return anyViolationsFound
+}
 
 func DumpDataJson() (error) {
+
+	if PrintContraintViolations() {
+		mfa.CatchFatal(errors.New("Source DB is inconsistent. Data could not be restored. Aborting dump."))
+	}
+
 	// CREDITS: https://www.mssqltips.com/sqlservertip/6179/sql-server-foreign-key-hierarchy-order-and-dependency-list-script/
 	stmt, err := DB.Prepare(`
 		WITH dependencies -- Get object with FK dependencies
