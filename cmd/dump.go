@@ -19,7 +19,8 @@ func init() {
         schema.SelectedConnectionConfig.Log = 2
       }
       schema.Connect()
-      schema.DumpDataJson()
+      deleteBeforeInsert := true
+      schema.DumpDataJson(deleteBeforeInsert)
       defer schema.DB.Close()
     },
   })

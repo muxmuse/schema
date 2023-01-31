@@ -289,7 +289,7 @@ func (table *TTable) InsertStatement() (string, string, error) {
 	return prefix, postifx, nil
 }
 
-func (table *TTable) Dump() (error) {
+func (table *TTable) Dump(deleteBeforeInsert bool) (error) {
 	query, err := table.DumpStatement()
 	if err != nil {
 		return err
@@ -307,6 +307,10 @@ func (table *TTable) Dump() (error) {
 	prefix, postfix, err := table.InsertStatement()
 	if err != nil {
 		return err
+	}
+
+	if deleteBeforeInsert {
+		fmt.Println("delete " + table.FqName() + ";")
 	}
 
 	i := 1
@@ -399,7 +403,7 @@ func PrintContraintViolations() bool {
 	return anyViolationsFound
 }
 
-func DumpDataJson() (error) {
+func DumpDataJson(deleteBeforeInsert bool) (error) {
 
 	if PrintContraintViolations() {
 		mfa.CatchFatal(errors.New("Source DB is inconsistent. Data could not be restored. Aborting dump."))
@@ -470,7 +474,7 @@ func DumpDataJson() (error) {
 	
 	for _, table := range tables {
 		table.LoadColumnsFromDb()
-		err := table.Dump()
+		err := table.Dump(deleteBeforeInsert)
 		if err != nil {
 			log.Println("[failure] " + table.FqName())
 			return err
