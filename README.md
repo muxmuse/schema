@@ -198,6 +198,23 @@ This will run all uninstall scripts and all install scripts from your local dire
 
 4. Install functions before installing procedures
 
+5. Data integrity check
+
+``` sql
+DBCC CHECKCONSTRAINTS WITH ALL_CONSTRAINTS;
+
+select
+    [query] = 'ALTER TABLE [' + s.name + '].[' + t.name + '] WITH CHECK CHECK CONSTRAINT [' + fk.name + ']',
+    s.name as [schema],
+    t.name as [table],
+    fk.name as [fkc],
+    fk.is_not_trusted
+    from sys.foreign_keys fk
+    join sys.tables t on t.object_id = fk.parent_object_id
+    join sys.schemas s on t.schema_id = s.schema_id
+where fk.is_not_trusted = 1
+```
+
 ## Notes
 
 Consider [mssql-scripter](https://github.com/microsoft/mssql-scripter/blob/dev/doc/installation_guide.md#linux-installation) for downloading schemas initially
